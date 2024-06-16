@@ -1,3 +1,18 @@
+import * as React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import AppNavigator from './src/navigation/AppNavigator';
+
+const App: React.FC = () => {
+  return (
+    <NavigationContainer>
+      <AppNavigator />
+    </NavigationContainer>
+  );
+};
+
+export default App;
+
+
 /**
  * Sample React Native App
  * https://github.com/facebook/react-native
@@ -5,7 +20,7 @@
  * @format
  */
 
-import React from 'react';
+/* import React from 'react';
 import type {PropsWithChildren} from 'react';
 import {
   SafeAreaView,
@@ -116,3 +131,4 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+ */
