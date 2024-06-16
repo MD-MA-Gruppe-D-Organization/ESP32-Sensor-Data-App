@@ -3,6 +3,7 @@ import { View, Text, Button, StyleSheet } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { fetchDataFromInfluxDB } from '../services/api'; // Import your API method
+import { Measurement } from '../services/Measurement';
 
 type RootStackParamList = {
   Home: undefined;
@@ -27,17 +28,16 @@ const VisualizationScreen: React.FC<VisualizationScreenProps> = ({ navigation })
 
   const fetchData = async () => {
     try {
-      const data = await fetchDataFromInfluxDB('mdma/1481765933');
-      console.log('Fetched data:', data);
-      if (data.results && data.results[0].series) {
-        data.results[0].series.forEach((seriesItem: any) => {
-          console.log('Series name:', seriesItem.name);
-          console.log('Series columns:', seriesItem.columns);
-          console.log('Series values:', seriesItem.values);
-        });
-      } else {
-        console.log('No series data found.');
-      }
+      const data: Measurement[] = await fetchDataFromInfluxDB('mdma/1481765933');
+      data.forEach((measurement, index) => {
+      console.log(`Measurement ${index + 1}:`);
+      console.log(`  Time: ${measurement.time}`);
+      console.log(`  Data: ${measurement.data}`);
+      console.log(`  Host: ${measurement.host}`);
+      console.log(`  Topic: ${measurement.topic}`);
+      console.log(); // Blank line for readability
+    });
+      
     } catch (error) {
       console.error('Error fetching data:', error);
     }
