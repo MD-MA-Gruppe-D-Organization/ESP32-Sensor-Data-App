@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+import { View, Button, StyleSheet } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 
@@ -8,18 +8,25 @@ type RootStackParamList = {
   Visualization: undefined;
 };
 
-type VisualizationScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Visualization'>;
+type VisualizationScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'Visualization'
+>;
 type VisualizationScreenRouteProp = RouteProp<RootStackParamList, 'Visualization'>;
 
-type Props = {
+export type VisualizationScreenProps = {
   navigation: VisualizationScreenNavigationProp;
   route: VisualizationScreenRouteProp;
 };
 
-const VisualizationScreen: React.FC<Props> = ({ navigation }) => {
+const VisualizationScreen: React.FC<VisualizationScreenProps> = ({ navigation }) => {
+  const handleHelloWorldPress = () => {
+    console.log('Hello World button pressed!');
+  };
+
   return (
     <View style={styles.container}>
-      <Text>Visualization Screen</Text>
+      <Button title="Hello World" onPress={handleHelloWorldPress} />
       <Button title="Go to Home" onPress={() => navigation.navigate('Home')} />
     </View>
   );
