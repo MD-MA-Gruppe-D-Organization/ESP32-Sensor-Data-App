@@ -2,7 +2,7 @@ import * as React from 'react';
 import { View, Text, Button, StyleSheet, FlatList, TouchableOpacity  } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { fetchDataFromInfluxDB } from '../services/api'; // Import your API method
+import { fetchLastMinutesFromInfluxDB,fetchNewestValueFromInfluxDB } from '../services/api'; // Import your API method
 import { Measurement } from '../services/Measurement';
 
 type RootStackParamList = {
@@ -24,21 +24,20 @@ export type VisualizationScreenProps = {
 const VisualizationScreen: React.FC<VisualizationScreenProps> = ({ navigation }) => {
   
   const [measurements, setMeasurements] = React.useState<Measurement[]>([]); // State to hold measurements
+  const [newestMeasurement, setNewestMeasurement] = React.useState<Measurement | null>(null); // State to hold the newest measurement
 
   const handleHelloWorldPress = () => {
     console.log('Hello World button pressed!');
   };
 
-  const fetchData = async () => {
+
+  const showLastMinutesMeasurements = async () => {
     try {
-      const topic = 'mdma/1481765933';                                          // Fetch from topic mdma/"controller-number"
-      const minutes = 1;                                                       // Fetch data for the last 60 minutes
-      const data: Measurement[] = await fetchDataFromInfluxDB(topic,minutes);   // Fetches data from our database
+      const topic = 'mdma/1481765933';                                                  // Fetch from topic mdma/"controller-number"
+      const minutes = 1;                                                                // Fetch data for the last x minutes
+      const data: Measurement[] = await fetchLastMinutesFromInfluxDB(topic, minutes);   // Fetches data from our database
       
       setMeasurements(data);
-
-      // @Nick ab hier hast du die Daten der letzten x minuten zugänglich ---> vielleicht in einer anderen Methode weitermachen?
-
       
       
       // Print measurements
@@ -52,6 +51,27 @@ const VisualizationScreen: React.FC<VisualizationScreenProps> = ({ navigation })
     }
   };
 
+  // Fetch and display the newest measurement in the list
+  const showNewestMeasurement = async () => {
+    try {
+      const topic = 'mdma/1481765933'; 
+
+      // Fetch newest single measurement
+      const newestMeasurementData: Measurement | null = await fetchNewestValueFromInfluxDB(topic);
+
+      // Update state with the newest measurement
+      setNewestMeasurement(newestMeasurementData);
+
+      // Log fetched measurement
+      if (newestMeasurementData) {
+        console.log(`Newest Measurement --- Time: ${newestMeasurementData.time} | Data: ${newestMeasurementData.data} | Host: ${newestMeasurementData.host} | Topic: ${newestMeasurementData.topic}`);
+      }
+
+    } catch (error) {
+      console.error('Error fetching newest measurement:', error);
+    }
+  };
+
   // Render item for FlatList
   const renderItem = ({ item }: { item: Measurement }) => (
     <TouchableOpacity style={styles.item}>
@@ -62,11 +82,27 @@ const VisualizationScreen: React.FC<VisualizationScreenProps> = ({ navigation })
     </TouchableOpacity>
   );
 
+  // Render newest measurement item
+  const renderNewestMeasurement = () => {
+    if (newestMeasurement) {
+      return (
+        <TouchableOpacity style={styles.item}>
+          <Text>Measurement Time: {newestMeasurement.time}</Text>
+          <Text>Data: {newestMeasurement.data}</Text>
+          <Text>Host: {newestMeasurement.host}</Text>
+          <Text>Topic: {newestMeasurement.topic}</Text>
+        </TouchableOpacity>
+      );
+    }
+    return null;
+  };
+
   return (
     <View style={styles.container}>
       <Text>Visualization Screen</Text>
       <Button title="Hello World" onPress={handleHelloWorldPress} />
-      <Button title="Fetch Data from API" onPress={fetchData} />
+      <Button title="Show Newest Measurement" onPress={showNewestMeasurement} />
+      <Button title="Fetch Data from API" onPress={showLastMinutesMeasurements} />
       <Button title="Go to Home" onPress={() => navigation.navigate('Home')} />
 
       {/* Display measurements in a FlatList */}
@@ -76,6 +112,9 @@ const VisualizationScreen: React.FC<VisualizationScreenProps> = ({ navigation })
         keyExtractor={(item, index) => `${index}`} // Use index as key
         style={{ marginTop: 20, width: '100%' }}
       />
+
+      {/* Display newest measurement */}
+      {renderNewestMeasurement()}
     </View>
   );
 };

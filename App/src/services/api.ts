@@ -3,7 +3,7 @@ const INFLUXDB_URL = 'http://10.0.2.2:8086/query'; // When you run the project o
 const DATABASE_NAME = 'iot_data';
 const API_TOKEN = 'tL2p3izJB02-a9Z7p-lPzcwoyWNqGTy0KJaqzz5wxELHF232mg4nO2hPztAfTRLQQFBfUHdZUoAUPedaaMCcTQ==';
 
-export const fetchDataFromInfluxDB = async (topic: string, minutes: number): Promise<Measurement[]> => {
+export const fetchLastMinutesFromInfluxDB = async (topic: string, minutes: number): Promise<Measurement[]> => {
   try {
     // Calculate the time threshold for the last 'minutes'
     const now = new Date();
@@ -43,6 +43,46 @@ export const fetchDataFromInfluxDB = async (topic: string, minutes: number): Pro
     }
 
     return measurementList;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    throw error;
+  }
+};
+
+
+export const fetchNewestValueFromInfluxDB = async (topic: string): Promise<Measurement | null> => {
+  try {
+    const query = `SELECT * FROM "mqtt_consumer" WHERE "topic" = '${topic}' ORDER BY time DESC LIMIT 1`;
+
+    const response = await fetch(`${INFLUXDB_URL}?pretty=true&db=${DATABASE_NAME}&q=${encodeURIComponent(query)}`, {
+      headers: {
+        'Authorization': `Token ${API_TOKEN}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.results || !data.results[0].series || !data.results[0].series[0].values || data.results[0].series[0].values.length === 0) {
+      return null; // No data available for the specified topic
+    }
+
+    const valueArray = data.results[0].series[0].values[0];
+    const value = valueArray[1];
+    const time = valueArray[0];
+    const host = valueArray[2]; // Assuming you have host and topic in your InfluxDB measurement
+    const fetchedTopic = valueArray[3];
+
+    if (fetchedTopic !== topic) {
+      throw new Error(`Unexpected topic '${fetchedTopic}' fetched from InfluxDB.`);
+    }
+
+    const measurement = new Measurement(time, value, host, topic);
+    return measurement;
   } catch (error) {
     console.error('Error fetching data:', error);
     throw error;
