@@ -5,21 +5,21 @@ import { RouteProp } from '@react-navigation/native';
 
 type RootStackParamList = {
   Home: undefined;
-  Profile: undefined;
+  Visualization: undefined;
 };
 
-type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Profile'>;
-type ProfileScreenRouteProp = RouteProp<RootStackParamList, 'Profile'>;
+type VisualizationScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Visualization'>;
+type VisualizationScreenRouteProp = RouteProp<RootStackParamList, 'Visualization'>;
 
 type Props = {
-  navigation: ProfileScreenNavigationProp;
-  route: ProfileScreenRouteProp;
+  navigation: VisualizationScreenNavigationProp;
+  route: VisualizationScreenRouteProp;
 };
 
-const ProfileScreen: React.FC<Props> = ({ navigation }) => {
+const VisualizationScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Text>Profile Screen</Text>
+      <Text>Visualization Screen</Text>
       <Button title="Go to Home" onPress={() => navigation.navigate('Home')} />
     </View>
   );
@@ -33,4 +33,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+export default VisualizationScreen;

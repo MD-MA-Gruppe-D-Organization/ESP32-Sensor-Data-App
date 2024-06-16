@@ -5,7 +5,7 @@ import { RouteProp } from '@react-navigation/native';
 
 type RootStackParamList = {
   Home: undefined;
-  Profile: undefined;
+  Visualization: undefined;
 };
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
@@ -20,7 +20,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text>Home Screen</Text>
-      <Button title="Go to Profile" onPress={() => navigation.navigate('Profile')} />
+      <Button title="Go to Visualization" onPress={() => navigation.navigate('Visualization')} />
     </View>
   );
 };

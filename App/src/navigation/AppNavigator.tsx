@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from '../screens/HomeScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import VisualizationScreen from '../screens/VisualizationScreen';
 
 type RootStackParamList = {
   Home: undefined;
@@ -15,7 +15,7 @@ const AppNavigator: React.FC = () => {
   return (
     <Stack.Navigator initialRouteName="Home">
       <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="Visualization" component={VisualizationScreen} />
     </Stack.Navigator>
   );
 };
