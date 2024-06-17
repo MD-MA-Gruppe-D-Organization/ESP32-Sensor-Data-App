@@ -1,7 +1,7 @@
 import { Measurement } from './Measurement';
 const INFLUXDB_URL = 'http://10.0.2.2:8086/query'; // When you run the project on an Android device, localhost is pointing to ur computer instead of the Android device so I changed http://localhost:3030 to http://10.0.2.2:3030
 const DATABASE_NAME = 'iot_data';
-const API_TOKEN = 'tL2p3izJB02-a9Z7p-lPzcwoyWNqGTy0KJaqzz5wxELHF232mg4nO2hPztAfTRLQQFBfUHdZUoAUPedaaMCcTQ==';
+const API_TOKEN = 'nbFDQnczXNoX0j-fCgioSybCP33D_n1WnAJiR8bexMEue1ww-4-z5LYKTK8g9bXZf5OhXY4v3c7vJRSsTBJoSg==';
 
 export const fetchLastMinutesFromInfluxDB = async (topic: string, minutes: number): Promise<Measurement[]> => {
   try {
@@ -10,6 +10,7 @@ export const fetchLastMinutesFromInfluxDB = async (topic: string, minutes: numbe
     const startTime = new Date(now.getTime() - minutes * 60000).toISOString(); // Convert minutes to milliseconds
 
     const query = `SELECT * FROM "mqtt_consumer" WHERE "topic" = '${topic}' AND time > '${startTime}'`;
+    
 
     const response = await fetch(`${INFLUXDB_URL}?pretty=true&db=${DATABASE_NAME}&q=${encodeURIComponent(query)}`, {
       headers: {
