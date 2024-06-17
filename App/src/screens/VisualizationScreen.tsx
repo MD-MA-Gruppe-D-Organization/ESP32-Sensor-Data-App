@@ -104,7 +104,7 @@ const VisualizationScreen: React.FC<VisualizationScreenProps> = ({ navigation })
       <Button title="Hello World" onPress={handleHelloWorldPress} />
       <Button
                 title="Go to HorizontalBar"
-                onPress={() => navigation.navigate('HorizontalBar', { percent: 100 })}
+                onPress={() => navigation.navigate('HorizontalBar', { percent: 30 })}
             />
       <Button title="Show Newest Measurement" onPress={showNewestMeasurement} />
       <Button title="Fetch Data from API" onPress={showLastMinutesMeasurements} />
