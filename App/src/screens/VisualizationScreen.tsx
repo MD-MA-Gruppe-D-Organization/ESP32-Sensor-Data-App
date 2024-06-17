@@ -4,6 +4,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { fetchLastMinutesFromInfluxDB,fetchNewestValueFromInfluxDB } from '../services/api'; // Import your API method
 import { Measurement } from '../services/Measurement';
+import HorizontalBar from '../components/HorizontalBar';
 
 type RootStackParamList = {
   Home: undefined;
@@ -101,6 +102,10 @@ const VisualizationScreen: React.FC<VisualizationScreenProps> = ({ navigation })
     <View style={styles.container}>
       <Text>Visualization Screen</Text>
       <Button title="Hello World" onPress={handleHelloWorldPress} />
+      <Button
+                title="Go to VerticalBar"
+                onPress={() => navigation.navigate('VerticalBar', { percent: 30 })}
+            />
       <Button title="Show Newest Measurement" onPress={showNewestMeasurement} />
       <Button title="Fetch Data from API" onPress={showLastMinutesMeasurements} />
       <Button title="Go to Home" onPress={() => navigation.navigate('Home')} />
@@ -113,10 +118,16 @@ const VisualizationScreen: React.FC<VisualizationScreenProps> = ({ navigation })
         style={{ marginTop: 20, width: '100%' }}
       />
 
+      {/* <View style={{ width: '80%' }}> 
+      <HorizontalBar value={0} maxValue={100} /> 
+      </View> */}
+
       {/* Display newest measurement */}
       {renderNewestMeasurement()}
     </View>
   );
+
+
 };
 
 const styles = StyleSheet.create({
