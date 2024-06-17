@@ -2,13 +2,13 @@ import * as React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from '../screens/HomeScreen';
 import VisualizationScreen from '../screens/VisualizationScreen';
-import VerticalBar from '../screens/VerticalBar';
+import HorizontalBar from '../screens/HorizontalBar';
 
 type RootStackParamList = {
   Home: undefined;
   Details: undefined;
   Profile: undefined;
-  VerticalBar: { percent: number };
+  HorizontalBar: { percent: number };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -18,7 +18,7 @@ const AppNavigator: React.FC = () => {
     <Stack.Navigator initialRouteName="Home">
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Visualization" component={VisualizationScreen} />
-      <Stack.Screen name="VerticalBar" component={VerticalBar} />
+      <Stack.Screen name="HorizontalBar" component={HorizontalBar} />
 
     </Stack.Navigator>
   );
