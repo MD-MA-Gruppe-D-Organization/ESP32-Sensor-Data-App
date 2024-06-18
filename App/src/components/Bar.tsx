@@ -28,7 +28,7 @@ const Bar: React.FC<BarProps> = ({ percent }) => {
     // Calculate x position to center the bar within the SVG
     const xPos = (100 - parseFloat(fullBarWidth)) / 2; // Centered xPos for the bar
     const textXPos = xPos + 10; // Adjusted xPos for the text
-
+    const percentTextXPos = parseFloat(fullBarWidth) + xPos - 20; // X position for the percentage text
     return (
         <View style={styles.container}>
             <Svg height={barHeight + 2 * barPadding} width="100%">
@@ -63,6 +63,17 @@ const Bar: React.FC<BarProps> = ({ percent }) => {
                     textAnchor="start" // Align text to the left
                 >
                     Trash Sensor 1
+                </Text>
+                {/* Percentage text */}
+                <Text
+                    x={`${percentTextXPos}%`} // X position for the percentage text
+                    y={barPadding + barHeight / 2 + 6} // Vertical center position
+                    fontSize="18"
+                    fontWeight="bold"
+                    fill="black"
+                    textAnchor="start"
+                >
+                    {percent}% Full
                 </Text>
             </Svg>
         </View>

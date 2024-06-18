@@ -75,7 +75,7 @@ const ExpandableContent: React.FC<ExpandableContentProps> = ({ expanded, measure
                 <Text x="5%" y="20%" fontSize="16" fontWeight="bold" fill="black" textAnchor="start">
                     Time:
                 </Text>
-                <Text x="25%" y="20%" fontSize="16" fill="black" textAnchor="start">
+                <Text x="35%" y="20%" fontSize="16" fill="black" textAnchor="start">
                     {displayValue(formatTime(measurement.time))}
                 </Text>
 
@@ -83,7 +83,7 @@ const ExpandableContent: React.FC<ExpandableContentProps> = ({ expanded, measure
                 <Text x="5%" y="35%" fontSize="16" fontWeight="bold" fill="black" textAnchor="start">
                     Host:
                 </Text>
-                <Text x="25%" y="35%" fontSize="16" fill="black" textAnchor="start">
+                <Text x="35%" y="35%" fontSize="16" fill="black" textAnchor="start">
                     {displayValue(measurement.host)}
                 </Text>
 
@@ -91,15 +91,23 @@ const ExpandableContent: React.FC<ExpandableContentProps> = ({ expanded, measure
                 <Text x="5%" y="50%" fontSize="16" fontWeight="bold" fill="black" textAnchor="start">
                     Topic:
                 </Text>
-                <Text x="25%" y="50%" fontSize="16" fill="black" textAnchor="start">
+                <Text x="35%" y="50%" fontSize="16" fill="black" textAnchor="start">
                     {displayValue(measurement.topic)}
                 </Text>
 
-                {/* Level */}
+                {/* Available Space */}
                 <Text x="5%" y="65%" fontSize="16" fontWeight="bold" fill="black" textAnchor="start">
-                    Level:
+                    Bin Size:
                 </Text>
-                <Text x="25%" y="65%" fontSize="16" fill="black" textAnchor="start">
+                <Text x="35%" y="65%" fontSize="16" fill="black" textAnchor="start">
+                    100 cm
+                </Text>
+
+                {/* Level */}
+                <Text x="5%" y="80%" fontSize="16" fontWeight="bold" fill="black" textAnchor="start">
+                    Room Left:
+                </Text>
+                <Text x="35%" y="80%" fontSize="16" fill="black" textAnchor="start">
                     {displayValue(measurement.data)} cm
                 </Text>
             </Svg>

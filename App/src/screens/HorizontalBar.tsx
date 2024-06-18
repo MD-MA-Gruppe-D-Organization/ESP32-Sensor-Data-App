@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableWithoutFeedback, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableWithoutFeedback, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import Bar from '../components/Bar';
 import ExpandableContent from '../components/ExpandableContent';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -13,33 +13,54 @@ const HorizontalBar: React.FC = () => {
     const [expanded, setExpanded] = useState(false);
     const [measurement, setMeasurement] = useState<Measurement | undefined>(undefined);
     const [loading, setLoading] = useState(true); // Loading state to manage API call
+    const [percent, setPercent] = useState<number>(100); // State for percentage calculation
 
     const route = useRoute<HorizontalBarRouteProp>();
-    const percent = route.params?.percent ?? 100; // Use 100 as the default value if no param is passed
 
     // Toggle function for expanding/collapsing
     const toggleExpansion = () => {
         setExpanded(!expanded);
     };
 
-    useEffect(() => {
-        const fetchMeasurement = async () => {
-            try {
-                const topic = 'mdma/1481765933'; // Replace with your actual topic
-                const fetchedMeasurement: Measurement | null = await fetchNewestValueFromInfluxDB(topic);
-                
-                if (fetchedMeasurement) {
-                    setMeasurement(fetchedMeasurement);
-                }
-            } catch (error) {
-                console.error('Error fetching measurement:', error);
-            } finally {
-                setLoading(false); // Update loading state regardless of success or failure
-            }
-        };
+    // Function to handle data refresh
+    const handleRefresh = () => {
+        setLoading(true); // Set loading state to true to show ActivityIndicator
 
         fetchMeasurement();
-    }, []);
+    };
+
+    const fetchMeasurement = async () => {
+        try {
+            const topic = 'mdma/1481765933'; // Replace with your actual topic
+            const fetchedMeasurement: Measurement | null = await fetchNewestValueFromInfluxDB(topic);
+            
+            if (fetchedMeasurement) {
+                setMeasurement(fetchedMeasurement);
+
+                // Calculate percentage based on measurement data
+                const dataValue = fetchedMeasurement.data ?? 0;
+                let calculatedPercent = 100 - dataValue; // Reverse logic: 100% if data is 0, 0% if data is 100 or more
+
+                // Ensure percent is within valid range
+                if (calculatedPercent < 0) {
+                    calculatedPercent = 0; // Cap percent at 0
+                } else if (calculatedPercent > 100) {
+                    calculatedPercent = 100; // Cap percent at 100
+                }
+
+
+                setPercent(calculatedPercent);
+            }
+        } catch (error) {
+            console.error('Error fetching measurement:', error);
+        } finally {
+            setLoading(false); // Update loading state regardless of success or failure
+        }
+    };
+
+    useEffect(() => {
+        fetchMeasurement();
+    }, []); // Fetch measurement on initial render
 
     if (loading) {
         return (
@@ -60,6 +81,11 @@ const HorizontalBar: React.FC = () => {
                     {measurement && <ExpandableContent expanded={expanded} measurement={measurement} />}
                 </View>
             </TouchableWithoutFeedback>
+            
+            {/* Refresh button */}
+            <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
+                <Text style={styles.refreshText}>Refresh</Text>
+            </TouchableOpacity>
         </View>
     );
 };
@@ -81,6 +107,18 @@ const styles = StyleSheet.create({
     },
     loadingContainer: {
         justifyContent: 'center',
+    },
+    refreshButton: {
+        marginTop: 10,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        backgroundColor: '#007bff', // Bootstrap blue color
+        borderRadius: 5,
+    },
+    refreshText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
 
