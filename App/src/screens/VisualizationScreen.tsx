@@ -4,7 +4,6 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { fetchLastMinutesFromInfluxDB,fetchNewestValueFromInfluxDB } from '../services/api'; // Import your API method
 import { Measurement } from '../services/Measurement';
-import HorizontalBar from '../components/HorizontalBar';
 
 type RootStackParamList = {
   Home: undefined;
@@ -26,10 +25,6 @@ const VisualizationScreen: React.FC<VisualizationScreenProps> = ({ navigation })
   
   const [measurements, setMeasurements] = React.useState<Measurement[]>([]); // State to hold measurements
   const [newestMeasurement, setNewestMeasurement] = React.useState<Measurement | null>(null); // State to hold the newest measurement
-
-  const handleHelloWorldPress = () => {
-    console.log('Hello World button pressed!');
-  };
 
 
   const showLastMinutesMeasurements = async () => {
@@ -101,9 +96,9 @@ const VisualizationScreen: React.FC<VisualizationScreenProps> = ({ navigation })
   return (
     <View style={styles.container}>
       <Text>Visualization Screen</Text>
-      <Button title="Hello World" onPress={handleHelloWorldPress} />
+      
       <Button
-                title="Go to HorizontalBar"
+                title="Horizontal Bar"
                 onPress={() => navigation.navigate('HorizontalBar', { percent: 30 })}
             />
       <Button title="Show Newest Measurement" onPress={showNewestMeasurement} />

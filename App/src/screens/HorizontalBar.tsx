@@ -14,6 +14,7 @@ const HorizontalBar: React.FC = () => {
     const [measurement, setMeasurement] = useState<Measurement | undefined>(undefined);
     const [loading, setLoading] = useState(true); // Loading state to manage API call
     const [percent, setPercent] = useState<number>(100); // State for percentage calculation
+    const [showToast, setShowToast] = useState(false); // State to manage toast visibility
 
     const route = useRoute<HorizontalBarRouteProp>();
 
@@ -24,8 +25,6 @@ const HorizontalBar: React.FC = () => {
 
     // Function to handle data refresh
     const handleRefresh = () => {
-        setLoading(true); // Set loading state to true to show ActivityIndicator
-
         fetchMeasurement();
     };
 
@@ -35,21 +34,28 @@ const HorizontalBar: React.FC = () => {
             const fetchedMeasurement: Measurement | null = await fetchNewestValueFromInfluxDB(topic);
             
             if (fetchedMeasurement) {
-                setMeasurement(fetchedMeasurement);
+                // Check if the fetched measurement is different from the current measurement
+                if (!isEqual(fetchedMeasurement, measurement)) {
+                    setMeasurement(fetchedMeasurement);
 
-                // Calculate percentage based on measurement data
-                const dataValue = fetchedMeasurement.data ?? 0;
-                let calculatedPercent = 100 - dataValue; // Reverse logic: 100% if data is 0, 0% if data is 100 or more
+                    // Calculate percentage based on measurement data
+                    const dataValue = fetchedMeasurement.data ?? 0;
+                    let calculatedPercent = 100 - dataValue; // Reverse logic: 100% if data is 0, 0% if data is 100 or more
 
-                // Ensure percent is within valid range
-                if (calculatedPercent < 0) {
-                    calculatedPercent = 0; // Cap percent at 0
-                } else if (calculatedPercent > 100) {
-                    calculatedPercent = 100; // Cap percent at 100
+                    // Ensure percent is within valid range
+                    if (calculatedPercent < 0) {
+                        calculatedPercent = 0; // Cap percent at 0
+                    } else if (calculatedPercent > 100) {
+                        calculatedPercent = 100; // Cap percent at 100
+                    }
+
+                    setPercent(calculatedPercent);
+
+                    // Show toast notification
+                    setShowToast(true);
+                    // Hide toast after 3 seconds
+                    setTimeout(() => setShowToast(false), 1500);
                 }
-
-
-                setPercent(calculatedPercent);
             }
         } catch (error) {
             console.error('Error fetching measurement:', error);
@@ -61,6 +67,19 @@ const HorizontalBar: React.FC = () => {
     useEffect(() => {
         fetchMeasurement();
     }, []); // Fetch measurement on initial render
+
+    // Function to compare two measurements
+    const isEqual = (measurement1: Measurement, measurement2: Measurement | undefined) => {
+        if (!measurement2) {
+            return false;
+        }
+        return (
+            measurement1.time === measurement2.time &&
+            measurement1.data === measurement2.data &&
+            measurement1.host === measurement2.host &&
+            measurement1.topic === measurement2.topic
+        );
+    };
 
     if (loading) {
         return (
@@ -86,6 +105,13 @@ const HorizontalBar: React.FC = () => {
             <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
                 <Text style={styles.refreshText}>Refresh</Text>
             </TouchableOpacity>
+
+            {/* Toast notification */}
+            {showToast && (
+                <View style={styles.toast}>
+                    <Text style={styles.toastText}>Updated</Text>
+                </View>
+            )}
         </View>
     );
 };
@@ -119,6 +145,18 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    toast: {
+        position: 'absolute',
+        bottom: 50, // Adjust as needed to position the toast
+        backgroundColor: '#333',
+        padding: 10,
+        borderRadius: 5,
+        alignSelf: 'center',
+    },
+    toastText: {
+        color: '#fff',
+        fontSize: 16,
     },
 });
 
