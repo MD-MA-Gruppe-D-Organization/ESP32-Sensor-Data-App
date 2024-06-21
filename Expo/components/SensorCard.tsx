@@ -1,5 +1,5 @@
 import { Measurement } from "@/api";
-import React from "react";
+import React, { useState } from "react";
 import {
   Card,
   IconButton,
@@ -7,21 +7,49 @@ import {
   useTheme,
   DataTable,
   List,
+  Button,
+  Dialog,
+  Portal,
+  TextInput,
 } from "react-native-paper";
 import { ThemedText } from "./ThemedText";
+import Storage from "react-native-storage";
 
 interface SensorCardProps {
   measurement: Measurement | undefined;
   handleRefresh: () => void;
   index: number;
+  onEdit: (binSize: number | undefined, location: string | undefined) => void;
+  binSize: number | undefined;
+  location: string | undefined;
 }
 
 const SensorCard: React.FC<SensorCardProps> = ({
   measurement,
   handleRefresh,
   index,
+  onEdit,
+  binSize,
+  location,
 }) => {
   const theme = useTheme();
+  const [visible, setVisible] = useState(false);
+  const [editedBinSize, setEditedBinSize] = useState(binSize);
+  const [editedLocation, setEditedLocation] = useState(location);
+
+  const handleEdit = () => {
+    setVisible(true);
+  };
+
+  const handleSave = () => {
+    if (editedBinSize !== undefined && editedLocation !== undefined) {
+      onEdit(editedBinSize, editedLocation);
+      setVisible(false);
+    } else {
+      console.error("save error");
+    }
+  };
+
   function normalizeValue(currentValue: number, maxValue = 100) {
     return currentValue / maxValue;
   }
@@ -136,6 +164,30 @@ const SensorCard: React.FC<SensorCardProps> = ({
           </DataTable>
         </List.Accordion>
       </Card.Content>
+      <IconButton icon="pencil" onPress={handleEdit} />
+      <Portal>
+        <Dialog
+          visible={visible}
+          onDismiss={() => [setVisible(false), handleSave]}
+        >
+          <Dialog.Title>Edit Bin Size and Location</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label="Bin Size"
+              value={editedBinSize?.toString()}
+              onChangeText={(text) => setEditedBinSize(Number(text))}
+            />
+            <TextInput
+              label="Location"
+              value={editedLocation}
+              onChangeText={(text) => setEditedLocation(text)}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={handleSave}>Save</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </Card>
   );
 };

@@ -4,12 +4,75 @@ import { useTheme } from "react-native-paper";
 import { Measurement, fetchNewestValueFromInfluxDB } from "@/api";
 import React, { useEffect, useState } from "react";
 import SensorCard from "@/components/SensorCard";
+import Storage from "react-native-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function HomeScreen() {
   const theme = useTheme();
   const [measurement, setMeasurement] = useState<Measurement | undefined>(
     undefined
   );
+  const [binSize, setBinSize] = useState<number | undefined>(undefined);
+  const [location, setLocation] = useState<string | undefined>(undefined);
+  const storage = new Storage({
+    size: 1000,
+    storageBackend: AsyncStorage,
+    defaultExpires: 1000 * 3600 * 24,
+    enableCache: true,
+  });
+
+  useEffect(() => {
+    async function loadStorage() {
+      try {
+        const storedBinSize = await storage.load({
+          key: "binSize",
+        });
+
+        const storedLocation = await storage.load({
+          key: "location",
+        });
+
+        if (storedBinSize && storedLocation) {
+          setBinSize(storedBinSize);
+          setLocation(storedLocation);
+        } else {
+          // Handle the case where the values are not found
+          console.log("Values not found in storage");
+          // You can also set default values here
+          setBinSize(100); // or some default value
+          setLocation(""); // or some default value
+        }
+      } catch (error) {
+        console.error("Error loading storage:", error);
+      }
+    }
+
+    loadStorage();
+  }, []);
+
+  const handleEdit = async (
+    binSize: number | undefined,
+    location: string | undefined
+  ) => {
+    setBinSize(binSize);
+    setLocation(location);
+
+    try {
+      await storage.save({
+        key: "binSize",
+        data: binSize,
+      });
+
+      await storage.save({
+        key: "location",
+        data: location,
+      });
+
+      console.log("saved");
+    } catch (error) {
+      console.error("Error saving to storage:", error);
+    }
+  };
 
   // Function to handle data refresh
   const handleRefresh = async () => {
@@ -21,17 +84,15 @@ export default function HomeScreen() {
       const topic = "mdma/1481765933"; // Replace with your actual topic
       const fetchedMeasurement = await fetchNewestValueFromInfluxDB(
         topic,
-        100,
-        "Home"
+        binSize,
+        location
       );
 
       if (!fetchedMeasurement) {
         throw new Error("fetchedMeasurement is faulty");
       }
 
-      if (measurement?.influx.value !== fetchedMeasurement.influx.value) {
-        setMeasurement(fetchedMeasurement);
-      }
+      setMeasurement(fetchedMeasurement);
     } catch (error) {
       console.error("Error fetching measurement:", error);
     }
@@ -56,6 +117,9 @@ export default function HomeScreen() {
             handleRefresh={handleRefresh}
             index={index}
             measurement={data}
+            onEdit={(binSize, location) => handleEdit(binSize, location)}
+            binSize={binSize}
+            location={location}
           />
         ))}
       </ScrollView>
