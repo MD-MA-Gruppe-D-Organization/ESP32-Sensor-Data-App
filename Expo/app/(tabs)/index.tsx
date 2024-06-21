@@ -19,7 +19,11 @@ export default function HomeScreen() {
   const fetchMeasurement = async () => {
     try {
       const topic = "mdma/1481765933"; // Replace with your actual topic
-      const fetchedMeasurement = await fetchNewestValueFromInfluxDB(topic);
+      const fetchedMeasurement = await fetchNewestValueFromInfluxDB(
+        topic,
+        100,
+        "Home"
+      );
 
       if (!fetchedMeasurement) {
         throw new Error("fetchedMeasurement is faulty");

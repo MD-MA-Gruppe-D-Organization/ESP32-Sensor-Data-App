@@ -64,7 +64,9 @@ const API_TOKEN =
 // };
 
 export const fetchNewestValueFromInfluxDB = async (
-  topic: string
+  topic: string,
+  binSize = 100,
+  location: string | undefined
 ): Promise<Measurement | null> => {
   try {
     const query = `SELECT * FROM "mqtt_consumer" WHERE "topic" = '${topic}' ORDER BY time DESC LIMIT 1`;
@@ -105,7 +107,7 @@ export const fetchNewestValueFromInfluxDB = async (
 
     return {
       influx: { host: host, id: id, time: time, topic: topic, value: value },
-      metaData: { binSize: 150, location: "Home" },
+      metaData: { binSize: binSize, location: location ?? "-" },
     };
   } catch (error) {
     console.error("Error fetching data:", error);
