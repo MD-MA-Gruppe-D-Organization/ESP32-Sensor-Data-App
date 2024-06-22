@@ -85,7 +85,7 @@ export default function HomeScreen() {
 
   const fetchMeasurement = async () => {
     try {
-      const topic = "mdma/1481765933"; // Replace with your actual topic
+      const topic = "mdma/1481765933"; //TODO remove hard coded topic
       const fetchedMeasurement = await fetchNewestValueFromInfluxDB(
         topic,
         binSize,
