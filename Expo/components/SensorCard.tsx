@@ -11,6 +11,8 @@ import {
   Dialog,
   Portal,
   TextInput,
+  Tooltip,
+  ActivityIndicator,
 } from "react-native-paper";
 import { ThemedText } from "./ThemedText";
 import Storage from "react-native-storage";
@@ -22,6 +24,7 @@ interface SensorCardProps {
   onEdit: (binSize: number | undefined, location: string | undefined) => void;
   binSize: number | undefined;
   location: string | undefined;
+  loadingRefresh: boolean;
 }
 
 const SensorCard: React.FC<SensorCardProps> = ({
@@ -31,6 +34,7 @@ const SensorCard: React.FC<SensorCardProps> = ({
   onEdit,
   binSize,
   location,
+  loadingRefresh,
 }) => {
   const theme = useTheme();
   const [visible, setVisible] = useState(false);
@@ -80,16 +84,27 @@ const SensorCard: React.FC<SensorCardProps> = ({
         <ThemedText type="subtitle">
           {measurement?.metaData.location}
         </ThemedText>
-        <ThemedText type="subtitle">
-          {(
-            normalizeValue(
-              measurement?.influx.value ?? 0,
-              measurement?.metaData.binSize
-            ) * 100
-          ).toFixed(1)}
-          %
-        </ThemedText>
-        <IconButton icon="reload" onPress={() => handleRefresh()} />
+        <Tooltip title="current fill-level">
+          <ThemedText type="subtitle">
+            {(
+              normalizeValue(
+                measurement?.influx.value ?? 0,
+                measurement?.metaData.binSize
+              ) * 100
+            ).toFixed(1)}
+            %
+          </ThemedText>
+        </Tooltip>
+        {loadingRefresh ? (
+          <ActivityIndicator size="small" />
+        ) : (
+          <IconButton
+            icon="reload"
+            onPress={() => {
+              handleRefresh();
+            }}
+          />
+        )}
       </Card.Content>
       <Card.Content>
         <ProgressBar
@@ -109,7 +124,7 @@ const SensorCard: React.FC<SensorCardProps> = ({
         />
         <List.Accordion
           title=""
-          left={(props) => (
+          right={(props) => (
             <List.Icon
               {...props}
               icon="information"
@@ -164,21 +179,23 @@ const SensorCard: React.FC<SensorCardProps> = ({
           </DataTable>
         </List.Accordion>
       </Card.Content>
-      <IconButton icon="pencil" onPress={handleEdit} />
+      <IconButton icon="cog" onPress={handleEdit} />
       <Portal>
         <Dialog
           visible={visible}
           onDismiss={() => [setVisible(false), handleSave]}
         >
-          <Dialog.Title>Edit Bin Size and Location</Dialog.Title>
-          <Dialog.Content>
+          <Dialog.Title>Settings</Dialog.Title>
+          <Dialog.Content style={{ display: "flex", gap: 8 }}>
             <TextInput
               label="Bin Size"
+              mode="outlined"
               value={editedBinSize?.toString()}
               onChangeText={(text) => setEditedBinSize(Number(text))}
             />
             <TextInput
               label="Location"
+              mode="outlined"
               value={editedLocation}
               onChangeText={(text) => setEditedLocation(text)}
             />

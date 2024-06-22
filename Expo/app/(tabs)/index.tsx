@@ -14,6 +14,8 @@ export default function HomeScreen() {
   );
   const [binSize, setBinSize] = useState<number | undefined>(undefined);
   const [location, setLocation] = useState<string | undefined>(undefined);
+  const [isLoadingRefresh, setIsLoadingRefresh] = useState(false);
+
   const storage = new Storage({
     size: 1000,
     storageBackend: AsyncStorage,
@@ -76,7 +78,9 @@ export default function HomeScreen() {
 
   // Function to handle data refresh
   const handleRefresh = async () => {
+    setIsLoadingRefresh(true);
     await fetchMeasurement();
+    setIsLoadingRefresh(false);
   };
 
   const fetchMeasurement = async () => {
@@ -120,6 +124,7 @@ export default function HomeScreen() {
             onEdit={(binSize, location) => handleEdit(binSize, location)}
             binSize={binSize}
             location={location}
+            loadingRefresh={isLoadingRefresh}
           />
         ))}
       </ScrollView>
