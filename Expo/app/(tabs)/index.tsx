@@ -1,7 +1,7 @@
 import { StyleSheet, SafeAreaView, ScrollView } from "react-native";
 
 import { useTheme } from "react-native-paper";
-import { Measurement, fetchNewestValueFromInfluxDB } from "@/api";
+import { Measurement, fetchAllTopicsFromInfluxDB, fetchNewestValueFromInfluxDB } from "@/api";
 import React, { useEffect, useState } from "react";
 import SensorCard from "@/components/SensorCard";
 import Storage from "react-native-storage";
@@ -79,6 +79,7 @@ export default function HomeScreen() {
   // Function to handle data refresh
   const handleRefresh = async () => {
     setIsLoadingRefresh(true);
+    await fetchAllTopicsFromInfluxDB();
     await fetchMeasurement();
     setIsLoadingRefresh(false);
   };

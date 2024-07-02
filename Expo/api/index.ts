@@ -2,6 +2,18 @@ const INFLUXDB_URL = "http://10.0.2.2:8086/query"; // When you run the project o
 const BUCKET = "iot_data";
 const API_TOKEN = "32z3zkGLMX-4YhM8wEYvOFLncb30L7QBayPqmj9UYHU1hqNNkQwgpmhDJkUhdDUHHImoGFNCvZbJRciePGtO3g==";
 
+interface InfluxDBResponse {
+  results: {
+    series?: [
+      {
+        name: string;
+        columns: string[];
+        values: [string, string][];  // Array of arrays where each inner array contains a topic header and a topic string
+      }
+    ];
+  }[];
+}
+
 
 // export const fetchLastMinutesFromInfluxDB = async (
 //   topic: string,
@@ -114,6 +126,49 @@ export const fetchNewestValueFromInfluxDB = async (
     throw error;
   }
 };
+
+export const fetchAllTopicsFromInfluxDB = async (): Promise<string[]> => {
+  try {
+    // Define the query to get all unique topics from the 'mqtt_consumer' measurement
+    const query = `SHOW TAG VALUES FROM "mqtt_consumer" WITH KEY = "topic"`;
+    const url = `${INFLUXDB_URL}?pretty=true&db=${BUCKET}&q=${encodeURIComponent(query)}`;
+
+    // Fetch data from the InfluxDB API
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Token ${API_TOKEN}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Parse the JSON response
+        const { results }: InfluxDBResponse = await response.json();
+
+    // Extract topics from the response
+    if (
+      !results ||
+      !results[0].series ||
+      !results[0].series[0].values ||
+      !results[0].series[0].values.length
+    ) {
+      return []; // No topics available
+    }
+
+    // Map over the topics and return them as a list of strings
+    const topics = results[0].series[0].values.map(([header, topic]) => topic)
+
+    return topics;
+  } catch (error) {
+    console.error("Error fetching topics:", error);
+    throw error;
+  }
+};
+
+
 
 export type Measurement = {
   influx: {
