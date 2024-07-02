@@ -92,7 +92,7 @@ export default function HomeScreen() {
       // Fetch measurements for all topics
       const measurements = await Promise.all(
         topics.map((topic) =>
-          fetchNewestValueFromInfluxDB(topic, binSize, location)
+          fetchNewestValueFromInfluxDB(topic, binSize, location,topic)
         )
       );
 

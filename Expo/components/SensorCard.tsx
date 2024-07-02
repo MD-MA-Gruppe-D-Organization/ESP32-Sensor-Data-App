@@ -82,7 +82,8 @@ const SensorCard: React.FC<SensorCardProps> = ({
         }}
       >
         <ThemedText type="subtitle">
-          {measurement?.metaData.location}
+        
+          {measurement?.metaData.location ? measurement.metaData.location : measurement?.metaData.hostName}
         </ThemedText>
         <Tooltip title="current fill-level">
           <ThemedText type="subtitle">
