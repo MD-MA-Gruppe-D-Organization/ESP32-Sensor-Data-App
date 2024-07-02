@@ -1,7 +1,7 @@
 const INFLUXDB_URL = "http://10.0.2.2:8086/query"; // When you run the project on an Android device, localhost is pointing to ur computer instead of the Android device so I changed http://localhost:3030 to http://10.0.2.2:3030
 const BUCKET = "iot_data";
-const API_TOKEN =
-  "fdDHzIY7gzwKbVOrPLBToVCmOAGAG0QIu3Lxjxt59CH75K-lqcH9FcES5uCoTqEVgwgRrKAqgtsTMGJg8Gurhg==";
+const API_TOKEN = "32z3zkGLMX-4YhM8wEYvOFLncb30L7QBayPqmj9UYHU1hqNNkQwgpmhDJkUhdDUHHImoGFNCvZbJRciePGtO3g==";
+
 
 // export const fetchLastMinutesFromInfluxDB = async (
 //   topic: string,
