@@ -1,0 +1,38 @@
+# Ignore node_modules directory located in the App directory
+/App/
+node_modules
+
+# Expo specific files and directories
+.expo/
+expo-env.d.ts
+web-build/
+
+# Distribution and debugging files
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# macOS specific file
+.DS_Store
+
+# Android and iOS build directories
+android/.gradle/
+android/app/build/
+ios/build/
+
+# Debug and production build files
+*.apk
+*.aab
+*.ipa
+
+# Logs
+*.log
+
+# Environment configuration files
+.env
+*.local

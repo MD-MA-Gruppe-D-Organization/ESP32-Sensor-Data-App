@@ -6,9 +6,21 @@
     "configurations": [
         {
             "name": "Attach to Hermes application",
-            "cwd": "${workspaceFolder}/App",
+            "cwd": "${workspaceFolder}/Expo",
             "type": "reactnativedirect",
             "request": "attach"
-        }
+        },
+        {
+            "cwd": "${workspaceFolder}/Expo",
+            "name": "Attach to Packager",
+            "type": "reactnativedirect",
+            "request": "attach",
+            "port": 8081,  // Port Metro Bundler is using
+            "sourceMaps": true,
+
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
     ]
 }

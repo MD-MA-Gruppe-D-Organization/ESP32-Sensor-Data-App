@@ -21,9 +21,10 @@ interface SensorCardProps {
   measurement: Measurement | undefined;
   handleRefresh: () => void;
   index: number;
-  onEdit: (binSize: number | undefined, location: string | undefined) => void;
+  onEdit: (binSize: number | undefined, location: string | undefined, hostName: string | undefined) => void;
   binSize: number | undefined;
   location: string | undefined;
+  hostName: string;
   loadingRefresh: boolean;
 }
 
@@ -34,11 +35,13 @@ const SensorCard: React.FC<SensorCardProps> = ({
   onEdit,
   binSize,
   location,
+  hostName,
   loadingRefresh,
 }) => {
   const theme = useTheme();
   const [visible, setVisible] = useState(false);
   const [editedBinSize, setEditedBinSize] = useState(binSize);
+
   const [editedLocation, setEditedLocation] = useState(location);
 
   const handleEdit = () => {
@@ -47,7 +50,7 @@ const SensorCard: React.FC<SensorCardProps> = ({
 
   const handleSave = () => {
     if (editedBinSize !== undefined && editedLocation !== undefined) {
-      onEdit(editedBinSize, editedLocation);
+      onEdit(editedBinSize, editedLocation,measurement?.metaData.hostName);
       setVisible(false);
     } else {
       console.error("save error");
@@ -82,7 +85,7 @@ const SensorCard: React.FC<SensorCardProps> = ({
         }}
       >
         <ThemedText type="subtitle">
-          {measurement?.metaData.location}
+          {location ? location : measurement?.metaData.hostName}
         </ThemedText>
         <Tooltip title="current fill-level">
           <ThemedText type="subtitle">

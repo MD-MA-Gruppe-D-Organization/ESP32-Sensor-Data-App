@@ -1,7 +1,6 @@
 import { StyleSheet, SafeAreaView, ScrollView } from "react-native";
-
 import { useTheme } from "react-native-paper";
-import { Measurement, fetchNewestValueFromInfluxDB } from "@/api";
+import { Measurement, fetchAllTopicsFromInfluxDB, fetchNewestValueFromInfluxDB } from "@/api";
 import React, { useEffect, useState } from "react";
 import SensorCard from "@/components/SensorCard";
 import Storage from "react-native-storage";
@@ -9,13 +8,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const [measurement, setMeasurement] = useState<Measurement | undefined>(
-    undefined
-  );
-  const [binSize, setBinSize] = useState<number | undefined>(undefined);
-  const [location, setLocation] = useState<string | undefined>(undefined);
+  const [measurement, setMeasurement] = useState<Measurement[]>([]);  // State to hold an array of measurements
   const [isLoadingRefresh, setIsLoadingRefresh] = useState(false);
+  const [binSizes, setBinSizes] = useState<Record<string, number>>({}); 
+  const [locations, setLocations] = useState<Record<string, string>>({}); // State to hold a mapping of hostNames to locations
 
+  // Initialize storage with AsyncStorage backend
   const storage = new Storage({
     size: 1000,
     storageBackend: AsyncStorage,
@@ -23,53 +21,51 @@ export default function HomeScreen() {
     enableCache: true,
   });
 
-  useEffect(() => {
-    async function loadStorage() {
-      try {
-        const storedBinSize = await storage.load({
-          key: "binSize",
-        });
+  // Function to load locations and bin sizes for a list of hostNames
+  async function loadStoragee(hostNames: string[]): Promise<void> {
+    try {
+      // Fetch locations and bin sizes for each hostName
+      const results = await Promise.all(
+        hostNames.map(async (hostName) => {
+          try {
+            const storedLocation = await storage.load({ key: hostName }).catch(() => "");
+            const storedBinSize = await storage.load({ key: `${hostName}binSize` }).catch(() => 100);
+            return { hostName, storedLocation, storedBinSize };
+          } catch (error) {
+            console.error(`Error loading data for ${hostName}:`, error);
+            return { hostName, storedLocation: "", storedBinSize: 100 };
+          }
+        })
+      );
 
-        const storedLocation = await storage.load({
-          key: "location",
-        });
+      // Convert the results into objects for easy lookup
+      const locationsMap = Object.fromEntries(results.map(({ hostName, storedLocation }) => [hostName, storedLocation]));
+      const binSizesMap = Object.fromEntries(results.map(({ hostName, storedBinSize }) => [hostName, storedBinSize]));
 
-        if (storedBinSize && storedLocation) {
-          setBinSize(storedBinSize);
-          setLocation(storedLocation);
-        } else {
-          // Handle the case where the values are not found
-          console.log("Values not found in storage");
-          // You can also set default values here
-          setBinSize(100); // or some default value
-          setLocation(""); // or some default value
-        }
-      } catch (error) {
-        console.error("Error loading storage:", error);
-      }
+      // Update the states
+      setLocations(locationsMap);
+      setBinSizes(binSizesMap);
+    } catch (error) {
+      console.error("Error loading storage:", error);
+    }
+  }
+
+  // Handle edits to binSize and location and save them to storage
+  const handleEdit = async (binSize: number | undefined, location: string | undefined, hostName: string) => {
+    if (binSize !== undefined) {
+      setBinSizes((prevBinSizes) => ({ ...prevBinSizes, [hostName]: binSize }));
+    }
+    if (location !== undefined) {
+      setLocations((prevLocations) => ({ ...prevLocations, [hostName]: location }));
     }
 
-    loadStorage();
-  }, []);
-
-  const handleEdit = async (
-    binSize: number | undefined,
-    location: string | undefined
-  ) => {
-    setBinSize(binSize);
-    setLocation(location);
-
     try {
-      await storage.save({
-        key: "binSize",
-        data: binSize,
-      });
-
-      await storage.save({
-        key: "location",
-        data: location,
-      });
-
+      if (binSize !== undefined) {
+        await storage.save({ key: `${hostName}binSize`, data: binSize });
+      }
+      if (location !== undefined) {
+        await storage.save({ key: hostName, data: location });
+      }
       console.log("saved");
     } catch (error) {
       console.error("Error saving to storage:", error);
@@ -79,32 +75,50 @@ export default function HomeScreen() {
   // Function to handle data refresh
   const handleRefresh = async () => {
     setIsLoadingRefresh(true);
-    await fetchMeasurement();
-    setIsLoadingRefresh(false);
+    try {
+      const topics = await fetchAllTopicsFromInfluxDB();
+      await loadStoragee(topics);
+      await fetchMeasurement(topics);  // Fetch measurements for all topics
+    } finally {
+      setIsLoadingRefresh(false);
+    }
   };
 
-  const fetchMeasurement = async () => {
+  // Function to fetch measurements for a list of topics
+  const fetchMeasurement = async (topics: string[]) => {
     try {
-      const topic = "mdma/1481765933"; //TODO remove hard coded topic
-      const fetchedMeasurement = await fetchNewestValueFromInfluxDB(
-        topic,
-        binSize,
-        location
+      // Fetch measurements for all topics
+      const measurements = await Promise.all(
+        topics.map((topic) =>
+          fetchNewestValueFromInfluxDB(topic, binSizes[topic] || 100, locations[topic] || "", topic)
+        )
       );
 
-      if (!fetchedMeasurement) {
-        throw new Error("fetchedMeasurement is faulty");
-      }
+      // Filter out null or undefined measurements
+      const validMeasurements = measurements.filter(
+        (measurement) => measurement !== null
+      ) as Measurement[];
 
-      setMeasurement(fetchedMeasurement);
+      // Update state with valid measurements
+      setMeasurement(validMeasurements);
     } catch (error) {
-      console.error("Error fetching measurement:", error);
+      console.error("Error fetching measurements:", error);
     }
   };
 
   useEffect(() => {
-    fetchMeasurement();
-  }, []); // Fetch measurement on initial render
+    const initializeData = async () => {
+      try {
+        const topics = await fetchAllTopicsFromInfluxDB();
+        await loadStoragee(topics);
+        await fetchMeasurement(topics);  // Fetch measurements on initial render
+      } catch (error) {
+        console.error("Failed to initialize data:", error);
+      }
+    };
+
+    initializeData();
+  }, []);  // Runs only on initial render
 
   return (
     <SafeAreaView
@@ -115,46 +129,20 @@ export default function HomeScreen() {
       }}
     >
       <ScrollView>
-        {[measurement].map((data, index) => (
+        {measurement.map((data, index) => (
           <SensorCard
-            key={measurement?.influx.id}
+            key={data.influx.id ?? `random-${index}`} // Ensure unique key based on measurement id
             handleRefresh={handleRefresh}
             index={index}
             measurement={data}
-            onEdit={(binSize, location) => handleEdit(binSize, location)}
-            binSize={binSize}
-            location={location}
+            onEdit={(binSize, location) => handleEdit(binSize, location, data.metaData.hostName)}
+            binSize={binSizes[data.metaData.hostName] || 100}
+            location={locations[data.metaData.hostName] || ""}  // Get the location for the current hostName
             loadingRefresh={isLoadingRefresh}
+            hostName={data.metaData.hostName} 
           />
         ))}
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const steps = [
-  {
-    title: "Sensor 1",
-    progress: 20,
-    time: "2024-06-21T16:16:01.000Z",
-    host: "b668bbddf4e1",
-    topic: "mdma/1481765933",
-    binSize: 100,
-  },
-  {
-    title: "Sensor 2",
-    progress: 96,
-    time: "2024-06-21T16:16:01.000Z",
-    host: "b668bbddf4e1",
-    topic: "mdma/1481765933",
-    binSize: 150,
-  },
-  {
-    title: "Sensor 3",
-    progress: 148,
-    time: "2024-06-21T16:16:01.000Z",
-    host: "b668bbddf4e1",
-    topic: "mdma/1481765933",
-    binSize: 200,
-  },
-];
