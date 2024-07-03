@@ -15,7 +15,7 @@
             "name": "Attach to Packager",
             "type": "reactnativedirect",
             "request": "attach",
-            "port": 8082,  // Port Metro Bundler is using
+            "port": 8081,  // Port Metro Bundler is using
             "sourceMaps": true,
 
             "skipFiles": [

@@ -12,6 +12,7 @@ export default function HomeScreen() {
   const [binSize, setBinSize] = useState<number | undefined>(undefined);
   const [location, setLocation] = useState<string | undefined>(undefined);
   const [isLoadingRefresh, setIsLoadingRefresh] = useState(false);
+  const [locations, setLocations] = useState<Record<string, string>>({}); // State to hold a mapping of hostNames to locations
 
   // Initialize storage with AsyncStorage backend
   const storage = new Storage({
@@ -21,7 +22,8 @@ export default function HomeScreen() {
     enableCache: true,
   });
 
-  useEffect(() => {
+  /* useEffect(() => {
+
     // Function to load binSize and location from storage
     async function loadStorage() {
       try {
@@ -48,12 +50,44 @@ export default function HomeScreen() {
     }
 
     loadStorage();
-  }, []);
+  }, []); */
+
+// Function to load locations for a list of hostNames
+async function loadStoragee(hostNames: string[]): Promise<void> {
+  try {
+
+    // Fetch locations for each hostName
+    const locationsFetched = await Promise.all(
+      hostNames.map(async (hostName) => {
+        try {
+          const storedLocation = await storage.load({
+          key: hostName,
+          }).catch(() => ""); // Default to empty string if there’s an error or storedLocation is undefined
+
+          return [hostName, storedLocation || ""] as [string, string]; // Ensure storedLocation is not undefined
+        } catch (error) {
+          console.error(`Error loading location for ${hostName}:`, error);
+          return [hostName, ""]; // Return an empty string or some default value if location is not found
+        }
+      })
+    );
+
+    // Convert the array of tuples into an object for easy lookup
+    const locationsMap = Object.fromEntries(locationsFetched);
+
+    // Update the locations state
+    setLocations(locationsMap);
+
+  } catch (error) {
+    console.error("Error loading storage:", error);
+  }
+}
 
   // Handle edits to binSize and location and save them to storage
   const handleEdit = async (
     binSize: number | undefined,
-    location: string | undefined
+    location: string | undefined,
+    hostName: string,
   ) => {
     setBinSize(binSize);
     setLocation(location);
@@ -65,7 +99,7 @@ export default function HomeScreen() {
       });
 
       await storage.save({
-        key: "location",
+        key: hostName,
         data: location,
       });
 
@@ -80,6 +114,9 @@ export default function HomeScreen() {
     setIsLoadingRefresh(true);
     try {
       const topics = await fetchAllTopicsFromInfluxDB();
+
+      loadStoragee(topics);
+
       await fetchMeasurement(topics);  // Fetch measurements for all topics
     } finally {
       setIsLoadingRefresh(false);
@@ -111,7 +148,9 @@ export default function HomeScreen() {
   useEffect(() => {
     const initializeData = async () => {
       try {
+     
         const topics = await fetchAllTopicsFromInfluxDB();
+        loadStoragee(topics);
         await fetchMeasurement(topics);  // Fetch measurements on initial render
       } catch (error) {
         console.error("Failed to initialize data:", error);
@@ -132,15 +171,14 @@ export default function HomeScreen() {
       <ScrollView>
         {measurement.map((data, index) => (
           <SensorCard
-            key={data.influx.id}  // Unique key based on measurement id
+            key={data.influx.id} // Unique key based on measurement id
             handleRefresh={handleRefresh}
             index={index}
             measurement={data}
-            onEdit={(binSize, location) => handleEdit(binSize, location)}
+            onEdit={(binSize, location) => handleEdit(binSize, location, data.metaData.hostName)}
             binSize={binSize}
-            location={location}
-            loadingRefresh={isLoadingRefresh}
-          />
+            location={locations[data.metaData.hostName] || ""}  // Get the location for the current hostName
+            loadingRefresh={isLoadingRefresh} hostName={""}          />
         ))}
       </ScrollView>
     </SafeAreaView>
