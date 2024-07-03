@@ -9,9 +9,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export default function HomeScreen() {
   const theme = useTheme();
   const [measurement, setMeasurement] = useState<Measurement[]>([]);  // State to hold an array of measurements
-  const [binSize, setBinSize] = useState<number | undefined>(undefined);
-  const [location, setLocation] = useState<string | undefined>(undefined);
   const [isLoadingRefresh, setIsLoadingRefresh] = useState(false);
+  const [binSizes, setBinSizes] = useState<Record<string, number>>({}); 
   const [locations, setLocations] = useState<Record<string, string>>({}); // State to hold a mapping of hostNames to locations
 
   // Initialize storage with AsyncStorage backend
@@ -22,87 +21,51 @@ export default function HomeScreen() {
     enableCache: true,
   });
 
-  /* useEffect(() => {
+  // Function to load locations and bin sizes for a list of hostNames
+  async function loadStoragee(hostNames: string[]): Promise<void> {
+    try {
+      // Fetch locations and bin sizes for each hostName
+      const results = await Promise.all(
+        hostNames.map(async (hostName) => {
+          try {
+            const storedLocation = await storage.load({ key: hostName }).catch(() => "");
+            const storedBinSize = await storage.load({ key: `${hostName}binSize` }).catch(() => 100);
+            return { hostName, storedLocation, storedBinSize };
+          } catch (error) {
+            console.error(`Error loading data for ${hostName}:`, error);
+            return { hostName, storedLocation: "", storedBinSize: 100 };
+          }
+        })
+      );
 
-    // Function to load binSize and location from storage
-    async function loadStorage() {
-      try {
-        const storedBinSize = await storage.load({
-          key: "binSize",
-        });
+      // Convert the results into objects for easy lookup
+      const locationsMap = Object.fromEntries(results.map(({ hostName, storedLocation }) => [hostName, storedLocation]));
+      const binSizesMap = Object.fromEntries(results.map(({ hostName, storedBinSize }) => [hostName, storedBinSize]));
 
-        const storedLocation = await storage.load({
-          key: "location",
-        });
-
-        if (storedBinSize && storedLocation) {
-          setBinSize(storedBinSize);
-          setLocation(storedLocation);
-        } else {
-          // Set default values if no stored values are found
-          console.log("Values not found in storage");
-          setBinSize(100); // Default binSize
-          setLocation(""); // Default location
-        }
-      } catch (error) {
-        console.error("Error loading storage:", error);
-      }
+      // Update the states
+      setLocations(locationsMap);
+      setBinSizes(binSizesMap);
+    } catch (error) {
+      console.error("Error loading storage:", error);
     }
-
-    loadStorage();
-  }, []); */
-
-// Function to load locations for a list of hostNames
-async function loadStoragee(hostNames: string[]): Promise<void> {
-  try {
-
-    // Fetch locations for each hostName
-    const locationsFetched = await Promise.all(
-      hostNames.map(async (hostName) => {
-        try {
-          const storedLocation = await storage.load({
-          key: hostName,
-          }).catch(() => ""); // Default to empty string if there’s an error or storedLocation is undefined
-
-          return [hostName, storedLocation || ""] as [string, string]; // Ensure storedLocation is not undefined
-        } catch (error) {
-          console.error(`Error loading location for ${hostName}:`, error);
-          return [hostName, ""]; // Return an empty string or some default value if location is not found
-        }
-      })
-    );
-
-    // Convert the array of tuples into an object for easy lookup
-    const locationsMap = Object.fromEntries(locationsFetched);
-
-    // Update the locations state
-    setLocations(locationsMap);
-
-  } catch (error) {
-    console.error("Error loading storage:", error);
   }
-}
 
   // Handle edits to binSize and location and save them to storage
-  const handleEdit = async (
-    binSize: number | undefined,
-    location: string | undefined,
-    hostName: string,
-  ) => {
-    setBinSize(binSize);
-    setLocation(location);
+  const handleEdit = async (binSize: number | undefined, location: string | undefined, hostName: string) => {
+    if (binSize !== undefined) {
+      setBinSizes((prevBinSizes) => ({ ...prevBinSizes, [hostName]: binSize }));
+    }
+    if (location !== undefined) {
+      setLocations((prevLocations) => ({ ...prevLocations, [hostName]: location }));
+    }
 
     try {
-      await storage.save({
-        key: "binSize",
-        data: binSize,
-      });
-
-      await storage.save({
-        key: hostName,
-        data: location,
-      });
-
+      if (binSize !== undefined) {
+        await storage.save({ key: `${hostName}binSize`, data: binSize });
+      }
+      if (location !== undefined) {
+        await storage.save({ key: hostName, data: location });
+      }
       console.log("saved");
     } catch (error) {
       console.error("Error saving to storage:", error);
@@ -114,9 +77,7 @@ async function loadStoragee(hostNames: string[]): Promise<void> {
     setIsLoadingRefresh(true);
     try {
       const topics = await fetchAllTopicsFromInfluxDB();
-
-      loadStoragee(topics);
-
+      await loadStoragee(topics);
       await fetchMeasurement(topics);  // Fetch measurements for all topics
     } finally {
       setIsLoadingRefresh(false);
@@ -129,7 +90,7 @@ async function loadStoragee(hostNames: string[]): Promise<void> {
       // Fetch measurements for all topics
       const measurements = await Promise.all(
         topics.map((topic) =>
-          fetchNewestValueFromInfluxDB(topic, binSize, location,topic)
+          fetchNewestValueFromInfluxDB(topic, binSizes[topic] || 100, locations[topic] || "", topic)
         )
       );
 
@@ -148,9 +109,8 @@ async function loadStoragee(hostNames: string[]): Promise<void> {
   useEffect(() => {
     const initializeData = async () => {
       try {
-     
         const topics = await fetchAllTopicsFromInfluxDB();
-        loadStoragee(topics);
+        await loadStoragee(topics);
         await fetchMeasurement(topics);  // Fetch measurements on initial render
       } catch (error) {
         console.error("Failed to initialize data:", error);
@@ -171,14 +131,16 @@ async function loadStoragee(hostNames: string[]): Promise<void> {
       <ScrollView>
         {measurement.map((data, index) => (
           <SensorCard
-            key={data.influx.id} // Unique key based on measurement id
+            key={data.influx.id ?? `random-${index}`} // Ensure unique key based on measurement id
             handleRefresh={handleRefresh}
             index={index}
             measurement={data}
             onEdit={(binSize, location) => handleEdit(binSize, location, data.metaData.hostName)}
-            binSize={binSize}
+            binSize={binSizes[data.metaData.hostName] || 100}
             location={locations[data.metaData.hostName] || ""}  // Get the location for the current hostName
-            loadingRefresh={isLoadingRefresh} hostName={""}          />
+            loadingRefresh={isLoadingRefresh}
+            hostName={data.metaData.hostName} 
+          />
         ))}
       </ScrollView>
     </SafeAreaView>
