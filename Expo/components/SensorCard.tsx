@@ -16,6 +16,7 @@ import {
 } from "react-native-paper";
 import { ThemedText } from "./ThemedText";
 import Storage from "react-native-storage";
+import { DateTime } from "luxon";
 
 interface SensorCardProps {
   measurement: Measurement | undefined;
@@ -80,113 +81,126 @@ const SensorCard: React.FC<SensorCardProps> = ({
         marginBottom: 16,
       }}
     >
-      <Card.Content
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          flexDirection: "row",
-        }}
-      >
-        <ThemedText type="subtitle">
-          {location ? location : measurement?.metaData.hostName}
-        </ThemedText>
-        <Tooltip title="current fill-level">
-          <ThemedText type="subtitle">
-            {(
-              normalizeValue(
-                measurement?.influx.value ?? 0,
-                measurement?.metaData.binSize
-              ) * 100
-            ).toFixed(1)}
-            %
-          </ThemedText>
-        </Tooltip>
-        {loadingRefresh ? (
-          <ActivityIndicator size="small" />
-        ) : (
-          <IconButton
-            icon="reload"
-            onPress={() => {
-              handleRefresh();
+      {!loadingRefresh ? (
+        <>
+          <Card.Content
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              flexDirection: "row",
+              paddingTop: 16,
             }}
-          />
-        )}
-      </Card.Content>
-      <Card.Content>
-        <ProgressBar
-          progress={normalizeValue(
-            measurement?.influx.value ?? 0,
-            measurement?.metaData.binSize
-          )}
-          color={progressColor(
-            measurement?.influx.value ??
-              0 *
-                normalizeValue(
-                  measurement?.influx.value ?? 0,
-                  measurement?.metaData.binSize
-                )
-          )}
-          style={{ marginTop: 16, height: 20, borderRadius: 8 }}
-        />
-        <List.Accordion
-          title=""
-          right={(props) => (
-            <List.Icon
-              {...props}
-              icon="information"
-              color={theme.colors.backdrop}
-            />
-          )}
-          style={{ borderRadius: 8, marginTop: 8 }}
-        >
-          <DataTable>
-            <DataTable.Row>
-              <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
-                Time
-              </DataTable.Cell>
-              <DataTable.Cell>{measurement?.influx.time}</DataTable.Cell>
-            </DataTable.Row>
-            <DataTable.Row>
-              <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
-                Host
-              </DataTable.Cell>
-              <DataTable.Cell>{measurement?.influx.host}</DataTable.Cell>
-            </DataTable.Row>
-            <DataTable.Row>
-              <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
-                Topic
-              </DataTable.Cell>
-              <DataTable.Cell>{measurement?.influx.topic}</DataTable.Cell>
-            </DataTable.Row>
-            <DataTable.Row>
-              <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
-                Bin Size
-              </DataTable.Cell>
-              <DataTable.Cell>
-                {measurement?.metaData.binSize} cm
-              </DataTable.Cell>
-            </DataTable.Row>
-            <DataTable.Row>
-              <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
-                Available Space
-              </DataTable.Cell>
-              <DataTable.Cell>
+          >
+            <ThemedText type="subtitle">
+              {location ? location : measurement?.metaData.hostName}
+            </ThemedText>
+            <Tooltip title="current fill-level">
+              <ThemedText type="subtitle">
                 {(
-                  100 -
                   normalizeValue(
                     measurement?.influx.value ?? 0,
                     measurement?.metaData.binSize
-                  ) *
-                    100
+                  ) * 100
                 ).toFixed(1)}
                 %
-              </DataTable.Cell>
-            </DataTable.Row>
-          </DataTable>
-        </List.Accordion>
-      </Card.Content>
-      <IconButton icon="cog" onPress={handleEdit} />
+              </ThemedText>
+            </Tooltip>
+          </Card.Content>
+          <Card.Content>
+            <ProgressBar
+              progress={normalizeValue(
+                measurement?.influx.value ?? 0,
+                measurement?.metaData.binSize
+              )}
+              color={progressColor(
+                measurement?.influx.value ??
+                  0 *
+                    normalizeValue(
+                      measurement?.influx.value ?? 0,
+                      measurement?.metaData.binSize
+                    )
+              )}
+              style={{ marginTop: 16, height: 20, borderRadius: 8 }}
+            />
+            <List.Accordion
+              title=""
+              right={(props) => (
+                <List.Icon
+                  {...props}
+                  icon="information"
+                  color={theme.colors.backdrop}
+                />
+              )}
+              style={{ borderRadius: 8, marginTop: 8 }}
+            >
+              <DataTable>
+                <DataTable.Row>
+                  <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
+                    Time
+                  </DataTable.Cell>
+                  <DataTable.Cell>
+                    {DateTime.fromISO(measurement?.influx.time!)
+                      .setZone("Europe/Berlin")
+                      .toLocaleString(DateTime.DATETIME_SHORT_WITH_SECONDS, {
+                        locale: "de-DE",
+                      })}
+                  </DataTable.Cell>
+                </DataTable.Row>
+                <DataTable.Row>
+                  <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
+                    Host
+                  </DataTable.Cell>
+                  <DataTable.Cell>{measurement?.influx.host}</DataTable.Cell>
+                </DataTable.Row>
+                <DataTable.Row>
+                  <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
+                    Topic
+                  </DataTable.Cell>
+                  <DataTable.Cell>{measurement?.influx.topic}</DataTable.Cell>
+                </DataTable.Row>
+                <DataTable.Row>
+                  <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
+                    Bin Size
+                  </DataTable.Cell>
+                  <DataTable.Cell>
+                    {measurement?.metaData.binSize} cm
+                  </DataTable.Cell>
+                </DataTable.Row>
+                <DataTable.Row>
+                  <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
+                    Available Space
+                  </DataTable.Cell>
+                  <DataTable.Cell>
+                    {(
+                      100 -
+                      normalizeValue(
+                        measurement?.influx.value ?? 0,
+                        measurement?.metaData.binSize
+                      ) *
+                        100
+                    ).toFixed(1)}
+                    %
+                  </DataTable.Cell>
+                </DataTable.Row>
+              </DataTable>
+            </List.Accordion>
+          </Card.Content>
+          <IconButton icon="cog" onPress={handleEdit} />
+        </>
+      ) : (
+        <ActivityIndicator
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+            padding: 16,
+          }}
+          size="small"
+        />
+      )}
+
       <Portal>
         <Dialog
           visible={visible}
