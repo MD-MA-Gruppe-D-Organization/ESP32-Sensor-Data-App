@@ -4,10 +4,11 @@ import React from "react";
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { useTheme } from "react-native-paper";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-
+  const theme = useTheme();
   return (
     <Tabs
       screenOptions={{
@@ -22,18 +23,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "home" : "home-outline"}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="chart"
-        options={{
-          title: "Chart",
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? "bar-chart" : "bar-chart-outline"}
               color={color}
             />
           ),
