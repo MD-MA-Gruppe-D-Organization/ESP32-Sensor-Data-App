@@ -1,4 +1,4 @@
-import { Measurement } from "@/api";
+import { fetchAllMeasurementsToTopicFromInfluxDB, Measurement } from "@/api";
 import React, { useState } from "react";
 import {
   Card,
@@ -13,13 +13,17 @@ import {
   TextInput,
   Tooltip,
   ActivityIndicator,
+  Modal,
 } from "react-native-paper";
 import { ThemedText } from "./ThemedText";
 import Storage from "react-native-storage";
 import { DateTime } from "luxon";
+import { ScrollView, View } from "react-native";
+import LineChartComponent from "./LineChart";
 
 interface SensorCardProps {
   measurement: Measurement | undefined;
+  measurements: Measurement[] | undefined;
   handleRefresh: () => void;
   index: number;
   onEdit: (
@@ -35,6 +39,7 @@ interface SensorCardProps {
 
 const SensorCard: React.FC<SensorCardProps> = ({
   measurement,
+  measurements,
   handleRefresh,
   index,
   onEdit,
@@ -45,10 +50,11 @@ const SensorCard: React.FC<SensorCardProps> = ({
 }) => {
   const theme = useTheme();
   const [visible, setVisible] = useState(false);
+  const [chartVisible, setChartVisible] = useState(false);
   const [editedBinSize, setEditedBinSize] = useState(binSize);
 
   const [editedLocation, setEditedLocation] = useState(location);
-
+  const [accordionExpanded, setAccordionExpanded] = useState(false); // New state for accordion visibility
   const handleEdit = () => {
     setVisible(true);
   };
@@ -80,6 +86,7 @@ const SensorCard: React.FC<SensorCardProps> = ({
         borderWidth: 0.5,
         marginBottom: 16,
       }}
+      onPress={() => setAccordionExpanded(!accordionExpanded)}
     >
       {!loadingRefresh ? (
         <>
@@ -123,70 +130,72 @@ const SensorCard: React.FC<SensorCardProps> = ({
               )}
               style={{ marginTop: 16, height: 20, borderRadius: 8 }}
             />
-            <List.Accordion
-              title=""
-              right={(props) => (
-                <List.Icon
-                  {...props}
-                  icon="information"
-                  color={theme.colors.backdrop}
-                />
-              )}
-              style={{ borderRadius: 8, marginTop: 8 }}
-            >
-              <DataTable>
-                <DataTable.Row>
-                  <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
-                    Time
-                  </DataTable.Cell>
-                  <DataTable.Cell>
-                    {DateTime.fromISO(measurement?.influx.time!)
-                      .setZone("Europe/Berlin")
-                      .toLocaleString(DateTime.DATETIME_SHORT_WITH_SECONDS, {
-                        locale: "de-DE",
-                      })}
-                  </DataTable.Cell>
-                </DataTable.Row>
-                <DataTable.Row>
-                  <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
-                    Host
-                  </DataTable.Cell>
-                  <DataTable.Cell>{measurement?.influx.host}</DataTable.Cell>
-                </DataTable.Row>
-                <DataTable.Row>
-                  <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
-                    Topic
-                  </DataTable.Cell>
-                  <DataTable.Cell>{measurement?.influx.topic}</DataTable.Cell>
-                </DataTable.Row>
-                <DataTable.Row>
-                  <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
-                    Bin Size
-                  </DataTable.Cell>
-                  <DataTable.Cell>
-                    {measurement?.metaData.binSize} cm
-                  </DataTable.Cell>
-                </DataTable.Row>
-                <DataTable.Row>
-                  <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
-                    Available Space
-                  </DataTable.Cell>
-                  <DataTable.Cell>
-                    {(
-                      100 -
-                      normalizeValue(
-                        measurement?.influx.value ?? 0,
-                        measurement?.metaData.binSize
-                      ) *
-                        100
-                    ).toFixed(1)}
-                    %
-                  </DataTable.Cell>
-                </DataTable.Row>
-              </DataTable>
-            </List.Accordion>
+
+            <DataTable style={{ display: accordionExpanded ? "flex" : "none" }}>
+              <DataTable.Row>
+                <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
+                  last measurement
+                </DataTable.Cell>
+                <DataTable.Cell>
+                  {DateTime.fromISO(measurement?.influx.time!)
+                    .setZone("Europe/Berlin")
+                    .toLocaleString(DateTime.DATETIME_SHORT_WITH_SECONDS, {
+                      locale: "de-DE",
+                    })}
+                </DataTable.Cell>
+              </DataTable.Row>
+              <DataTable.Row>
+                <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
+                  host
+                </DataTable.Cell>
+                <DataTable.Cell>{measurement?.influx.host}</DataTable.Cell>
+              </DataTable.Row>
+              <DataTable.Row>
+                <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
+                  topic
+                </DataTable.Cell>
+                <DataTable.Cell>{measurement?.influx.topic}</DataTable.Cell>
+              </DataTable.Row>
+              <DataTable.Row>
+                <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
+                  bin height
+                </DataTable.Cell>
+                <DataTable.Cell>
+                  {measurement?.metaData.binSize} cm
+                </DataTable.Cell>
+              </DataTable.Row>
+              <DataTable.Row>
+                <DataTable.Cell textStyle={{ fontWeight: "bold" }}>
+                  remaining space
+                </DataTable.Cell>
+                <DataTable.Cell>
+                  {(
+                    100 -
+                    normalizeValue(
+                      measurement?.influx.value ?? 0,
+                      measurement?.metaData.binSize
+                    ) *
+                      100
+                  ).toFixed(1)}
+                  %
+                </DataTable.Cell>
+              </DataTable.Row>
+            </DataTable>
           </Card.Content>
-          <IconButton icon="cog" onPress={handleEdit} />
+
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <IconButton icon="cog" onPress={handleEdit} />
+            <IconButton
+              icon="chart-bell-curve"
+              onPress={() => setChartVisible(true)}
+            />
+          </View>
         </>
       ) : (
         <ActivityIndicator
@@ -225,6 +234,23 @@ const SensorCard: React.FC<SensorCardProps> = ({
             <Button onPress={handleSave}>Save</Button>
           </Dialog.Actions>
         </Dialog>
+      </Portal>
+
+      <Portal>
+        <Modal
+          visible={chartVisible}
+          onDismiss={() => [setChartVisible(false)]}
+          contentContainerStyle={{
+            padding: 8,
+            backgroundColor: theme.colors.background,
+          }}
+        >
+          <ScrollView horizontal={true} centerContent={true}>
+            <LineChartComponent
+              topic={measurement!.influx.topic!}
+            ></LineChartComponent>
+          </ScrollView>
+        </Modal>
       </Portal>
     </Card>
   );

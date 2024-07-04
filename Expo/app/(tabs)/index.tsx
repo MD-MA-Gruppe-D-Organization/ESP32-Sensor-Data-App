@@ -7,6 +7,7 @@ import {
 import { useTheme } from "react-native-paper";
 import {
   Measurement,
+  fetchAllMeasurementsToTopicFromInfluxDB,
   fetchAllTopicsFromInfluxDB,
   fetchNewestValueFromInfluxDB,
 } from "@/api";
@@ -168,21 +169,26 @@ export default function HomeScreen() {
           ></RefreshControl>
         }
       >
-        {measurement.map((data, index) => (
-          <SensorCard
-            key={data.influx.id ?? `random-${index}`} // Ensure unique key based on measurement id
-            handleRefresh={handleRefresh}
-            index={index}
-            measurement={data}
-            onEdit={(binSize, location) =>
-              handleEdit(binSize, location, data.metaData.hostName)
-            }
-            binSize={binSizes[data.metaData.hostName] || 100}
-            location={locations[data.metaData.hostName] || ""} // Get the location for the current hostName
-            loadingRefresh={isLoadingRefresh}
-            hostName={data.metaData.hostName}
-          />
-        ))}
+        {measurement.map((data, index) => {
+          const key = data.influx.id ?? `random-${index}`;
+
+          return (
+            <SensorCard
+              key={key}
+              handleRefresh={handleRefresh}
+              index={index}
+              measurement={data}
+              measurements={measurement}
+              onEdit={(binSize, location) =>
+                handleEdit(binSize, location, data.metaData.hostName)
+              }
+              binSize={binSizes[data.metaData.hostName] || 100}
+              location={locations[data.metaData.hostName] || ""}
+              loadingRefresh={isLoadingRefresh}
+              hostName={data.metaData.hostName}
+            />
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,6 +1,6 @@
 const INFLUXDB_URL = "http://10.0.2.2:8086/query"; // When you run the project on an Android device, localhost is pointing to ur computer instead of the Android device so I changed http://localhost:3030 to http://10.0.2.2:3030
 const BUCKET = "iot_data";
-const API_TOKEN = "DD85150B-3871-4622-8D14-45BFE743C270"; // token is never changing 
+const API_TOKEN = "DD85150B-3871-4622-8D14-45BFE743C270"; // token is never changing
 
 interface InfluxDBResponse {
   results: {
@@ -65,6 +65,48 @@ export const fetchNewestValueFromInfluxDB = async (
         hostName: hostName ?? "-",
       },
     };
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    throw error;
+  }
+};
+
+export const fetchAllMeasurementsToTopicFromInfluxDB = async (
+  topic: string
+) => {
+  try {
+    const query = `SELECT * FROM "mqtt_consumer" WHERE "topic" = '${topic}' ORDER BY time DESC LIMIT 12`;
+    const url = `${INFLUXDB_URL}?pretty=true&db=${BUCKET}&q=${encodeURIComponent(
+      query
+    )}&u=${encodeURIComponent(query)}`;
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Token ${API_TOKEN}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const { results }: InfluxDBResponse = await response.json();
+
+    if (
+      !results ||
+      !results[0].series ||
+      !results[0].series[0].values ||
+      !results[0].series[0].values[0]
+    ) {
+      return null; // No data available for the specified topic
+    }
+
+    const result = results.flatMap((result) =>
+      result.series?.flatMap((serie) => serie.values)
+    );
+
+    return result;
   } catch (error) {
     console.error("Error fetching data:", error);
     throw error;
