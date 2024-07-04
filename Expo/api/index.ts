@@ -1,6 +1,6 @@
 const INFLUXDB_URL = "http://10.0.2.2:8086/query"; // When you run the project on an Android device, localhost is pointing to ur computer instead of the Android device so I changed http://localhost:3030 to http://10.0.2.2:3030
 const BUCKET = "iot_data";
-const API_TOKEN = "32z3zkGLMX-4YhM8wEYvOFLncb30L7QBayPqmj9UYHU1hqNNkQwgpmhDJkUhdDUHHImoGFNCvZbJRciePGtO3g==";
+const API_TOKEN = "DD85150B-3871-4622-8D14-45BFE743C270"; // token is never changing 
 
 interface InfluxDBResponse {
   results: {
@@ -8,72 +8,11 @@ interface InfluxDBResponse {
       {
         name: string;
         columns: string[];
-        values: [string, string][];  // Array of arrays where each inner array contains a topic header and a topic string
+        values: [string, string][]; // Array of arrays where each inner array contains a topic header and a topic string
       }
     ];
   }[];
 }
-
-
-// export const fetchLastMinutesFromInfluxDB = async (
-//   topic: string,
-//   minutes: number
-// ): Promise<Measurement[]> => {
-//   try {
-//     // Calculate the time threshold for the last 'minutes'
-//     const now = new Date();
-//     const startTime = new Date(now.getTime() - minutes * 60000).toISOString(); // Convert minutes to milliseconds
-
-//     const query = `SELECT * FROM "mqtt_consumer" WHERE "topic" = '${topic}' AND time > '${startTime}'`;
-
-//     const response = await fetch(
-//       `${INFLUXDB_URL}?pretty=true&db=${DATABASE_NAME}&q=${encodeURIComponent(
-//         query
-//       )}`,
-//       {
-//         headers: {
-//           Authorization: `Token ${API_TOKEN}`,
-//           Accept: "application/json",
-//         },
-//       }
-//     );
-
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! status: ${response.status}`);
-//     }
-
-//     const data = await response.json();
-
-//     if (
-//       !data.results ||
-//       !data.results[0].series ||
-//       !data.results[0].series[0].values
-//     ) {
-//       throw new Error(
-//         "No data available for the specified topic and time range."
-//       );
-//     }
-
-//     const values = data.results[0].series[0].values;
-//     const measurementList: Measurement[] = [];
-
-//     for (let i = 0; i < values.length; i++) {
-//       const valueArray = values[i];
-//       const value = valueArray[1];
-//       const time = valueArray[0];
-//       const host = valueArray[2];
-//       const topic = valueArray[3];
-
-//       const measurement = new Measurement(time, value, host, topic);
-//       measurementList.push(measurement);
-//     }
-
-//     return measurementList;
-//   } catch (error) {
-//     console.error("Error fetching data:", error);
-//     throw error;
-//   }
-// };
 
 export const fetchNewestValueFromInfluxDB = async (
   topic: string,
@@ -85,7 +24,7 @@ export const fetchNewestValueFromInfluxDB = async (
     const query = `SELECT * FROM "mqtt_consumer" WHERE "topic" = '${topic}' ORDER BY time DESC LIMIT 1`;
     const url = `${INFLUXDB_URL}?pretty=true&db=${BUCKET}&q=${encodeURIComponent(
       query
-    )}`;
+    )}&u=${encodeURIComponent(query)}`;
 
     const response = await fetch(url, {
       headers: {
@@ -120,7 +59,11 @@ export const fetchNewestValueFromInfluxDB = async (
 
     return {
       influx: { host: host, id: id, time: time, topic: topic, value: value },
-      metaData: { binSize: binSize, location: location ?? "-", hostName: hostName ?? "-"},
+      metaData: {
+        binSize: binSize,
+        location: location ?? "-",
+        hostName: hostName ?? "-",
+      },
     };
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -132,7 +75,9 @@ export const fetchAllTopicsFromInfluxDB = async (): Promise<string[]> => {
   try {
     // Define the query to get all unique topics from the 'mqtt_consumer' measurement
     const query = `SHOW TAG VALUES FROM "mqtt_consumer" WITH KEY = "topic"`;
-    const url = `${INFLUXDB_URL}?pretty=true&db=${BUCKET}&q=${encodeURIComponent(query)}`;
+    const url = `${INFLUXDB_URL}?pretty=true&db=${BUCKET}&q=${encodeURIComponent(
+      query
+    )}`;
 
     // Fetch data from the InfluxDB API
     const response = await fetch(url, {
@@ -147,7 +92,7 @@ export const fetchAllTopicsFromInfluxDB = async (): Promise<string[]> => {
     }
 
     // Parse the JSON response
-        const { results }: InfluxDBResponse = await response.json();
+    const { results }: InfluxDBResponse = await response.json();
 
     // Extract topics from the response
     if (
@@ -160,7 +105,7 @@ export const fetchAllTopicsFromInfluxDB = async (): Promise<string[]> => {
     }
 
     // Map over the topics and return them as a list of strings
-    const topics = results[0].series[0].values.map(([header, topic]) => topic)
+    const topics = results[0].series[0].values.map(([header, topic]) => topic);
 
     return topics;
   } catch (error) {
@@ -168,8 +113,6 @@ export const fetchAllTopicsFromInfluxDB = async (): Promise<string[]> => {
     throw error;
   }
 };
-
-
 
 export type Measurement = {
   influx: {

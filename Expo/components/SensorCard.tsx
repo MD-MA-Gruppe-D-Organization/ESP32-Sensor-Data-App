@@ -21,7 +21,11 @@ interface SensorCardProps {
   measurement: Measurement | undefined;
   handleRefresh: () => void;
   index: number;
-  onEdit: (binSize: number | undefined, location: string | undefined, hostName: string | undefined) => void;
+  onEdit: (
+    binSize: number | undefined,
+    location: string | undefined,
+    hostName: string | undefined
+  ) => void;
   binSize: number | undefined;
   location: string | undefined;
   hostName: string;
@@ -50,7 +54,7 @@ const SensorCard: React.FC<SensorCardProps> = ({
 
   const handleSave = () => {
     if (editedBinSize !== undefined && editedLocation !== undefined) {
-      onEdit(editedBinSize, editedLocation,measurement?.metaData.hostName);
+      onEdit(editedBinSize, editedLocation, measurement?.metaData.hostName);
       setVisible(false);
     } else {
       console.error("save error");

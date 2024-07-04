@@ -1,6 +1,15 @@
-import { StyleSheet, SafeAreaView, ScrollView } from "react-native";
+import {
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  RefreshControl,
+} from "react-native";
 import { useTheme } from "react-native-paper";
-import { Measurement, fetchAllTopicsFromInfluxDB, fetchNewestValueFromInfluxDB } from "@/api";
+import {
+  Measurement,
+  fetchAllTopicsFromInfluxDB,
+  fetchNewestValueFromInfluxDB,
+} from "@/api";
 import React, { useEffect, useState } from "react";
 import SensorCard from "@/components/SensorCard";
 import Storage from "react-native-storage";
@@ -8,9 +17,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const [measurement, setMeasurement] = useState<Measurement[]>([]);  // State to hold an array of measurements
+  const [measurement, setMeasurement] = useState<Measurement[]>([]); // State to hold an array of measurements
   const [isLoadingRefresh, setIsLoadingRefresh] = useState(false);
-  const [binSizes, setBinSizes] = useState<Record<string, number>>({}); 
+  const [binSizes, setBinSizes] = useState<Record<string, number>>({});
   const [locations, setLocations] = useState<Record<string, string>>({}); // State to hold a mapping of hostNames to locations
 
   // Initialize storage with AsyncStorage backend
@@ -28,8 +37,12 @@ export default function HomeScreen() {
       const results = await Promise.all(
         hostNames.map(async (hostName) => {
           try {
-            const storedLocation = await storage.load({ key: hostName }).catch(() => "");
-            const storedBinSize = await storage.load({ key: `${hostName}binSize` }).catch(() => 100);
+            const storedLocation = await storage
+              .load({ key: hostName })
+              .catch(() => "");
+            const storedBinSize = await storage
+              .load({ key: `${hostName}binSize` })
+              .catch(() => 100);
             return { hostName, storedLocation, storedBinSize };
           } catch (error) {
             console.error(`Error loading data for ${hostName}:`, error);
@@ -39,8 +52,15 @@ export default function HomeScreen() {
       );
 
       // Convert the results into objects for easy lookup
-      const locationsMap = Object.fromEntries(results.map(({ hostName, storedLocation }) => [hostName, storedLocation]));
-      const binSizesMap = Object.fromEntries(results.map(({ hostName, storedBinSize }) => [hostName, storedBinSize]));
+      const locationsMap = Object.fromEntries(
+        results.map(({ hostName, storedLocation }) => [
+          hostName,
+          storedLocation,
+        ])
+      );
+      const binSizesMap = Object.fromEntries(
+        results.map(({ hostName, storedBinSize }) => [hostName, storedBinSize])
+      );
 
       // Update the states
       setLocations(locationsMap);
@@ -51,12 +71,19 @@ export default function HomeScreen() {
   }
 
   // Handle edits to binSize and location and save them to storage
-  const handleEdit = async (binSize: number | undefined, location: string | undefined, hostName: string) => {
+  const handleEdit = async (
+    binSize: number | undefined,
+    location: string | undefined,
+    hostName: string
+  ) => {
     if (binSize !== undefined) {
       setBinSizes((prevBinSizes) => ({ ...prevBinSizes, [hostName]: binSize }));
     }
     if (location !== undefined) {
-      setLocations((prevLocations) => ({ ...prevLocations, [hostName]: location }));
+      setLocations((prevLocations) => ({
+        ...prevLocations,
+        [hostName]: location,
+      }));
     }
 
     try {
@@ -78,7 +105,7 @@ export default function HomeScreen() {
     try {
       const topics = await fetchAllTopicsFromInfluxDB();
       await loadStoragee(topics);
-      await fetchMeasurement(topics);  // Fetch measurements for all topics
+      await fetchMeasurement(topics); // Fetch measurements for all topics
     } finally {
       setIsLoadingRefresh(false);
     }
@@ -90,7 +117,12 @@ export default function HomeScreen() {
       // Fetch measurements for all topics
       const measurements = await Promise.all(
         topics.map((topic) =>
-          fetchNewestValueFromInfluxDB(topic, binSizes[topic] || 100, locations[topic] || "", topic)
+          fetchNewestValueFromInfluxDB(
+            topic,
+            binSizes[topic] || 100,
+            locations[topic] || "",
+            topic
+          )
         )
       );
 
@@ -111,14 +143,14 @@ export default function HomeScreen() {
       try {
         const topics = await fetchAllTopicsFromInfluxDB();
         await loadStoragee(topics);
-        await fetchMeasurement(topics);  // Fetch measurements on initial render
+        await fetchMeasurement(topics); // Fetch measurements on initial render
       } catch (error) {
         console.error("Failed to initialize data:", error);
       }
     };
 
     initializeData();
-  }, []);  // Runs only on initial render
+  }, []); // Runs only on initial render
 
   return (
     <SafeAreaView
@@ -128,18 +160,27 @@ export default function HomeScreen() {
         paddingVertical: 32,
       }}
     >
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingRefresh}
+            onRefresh={handleRefresh}
+          ></RefreshControl>
+        }
+      >
         {measurement.map((data, index) => (
           <SensorCard
             key={data.influx.id ?? `random-${index}`} // Ensure unique key based on measurement id
             handleRefresh={handleRefresh}
             index={index}
             measurement={data}
-            onEdit={(binSize, location) => handleEdit(binSize, location, data.metaData.hostName)}
+            onEdit={(binSize, location) =>
+              handleEdit(binSize, location, data.metaData.hostName)
+            }
             binSize={binSizes[data.metaData.hostName] || 100}
-            location={locations[data.metaData.hostName] || ""}  // Get the location for the current hostName
+            location={locations[data.metaData.hostName] || ""} // Get the location for the current hostName
             loadingRefresh={isLoadingRefresh}
-            hostName={data.metaData.hostName} 
+            hostName={data.metaData.hostName}
           />
         ))}
       </ScrollView>
