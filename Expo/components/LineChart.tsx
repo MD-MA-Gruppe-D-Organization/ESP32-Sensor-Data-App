@@ -16,8 +16,8 @@ const LineChartComponent: React.FC<LineChartProps> = ({ topic }) => {
 
   const fetchMeasurementsForTopic = async () => {
     const response = await fetchAllMeasurementsToTopicFromInfluxDB(topic);
-
-    return response;
+    const responseSet = new Set(response);
+    return [...responseSet].slice(-12);
   };
 
   useEffect(() => {
