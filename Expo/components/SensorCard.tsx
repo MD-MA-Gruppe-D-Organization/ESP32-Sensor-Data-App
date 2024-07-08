@@ -99,11 +99,17 @@ const SensorCard: React.FC<SensorCardProps> = ({
               paddingTop: 16,
             }}
           >
-            <ThemedText type="subtitle">
+            <ThemedText
+              type="subtitle"
+              style={{ color: theme.colors.onBackground }}
+            >
               {location ? location : measurement?.metaData.hostName}
             </ThemedText>
             <Tooltip title="current fill-level">
-              <ThemedText type="subtitle">
+              <ThemedText
+                type="subtitle"
+                style={{ color: theme.colors.onBackground }}
+              >
                 {(
                   normalizeValue(
                     measurement?.influx.value ?? 0,
@@ -190,8 +196,13 @@ const SensorCard: React.FC<SensorCardProps> = ({
               alignItems: "center",
             }}
           >
-            <IconButton icon="cog" onPress={handleEdit} />
             <IconButton
+              background={theme.colors.secondary}
+              icon="cog"
+              onPress={handleEdit}
+            />
+            <IconButton
+              background={theme.colors.secondary}
               icon="chart-bell-curve"
               onPress={() => setChartVisible(true)}
             />
@@ -245,7 +256,7 @@ const SensorCard: React.FC<SensorCardProps> = ({
             backgroundColor: theme.colors.background,
           }}
         >
-          <ScrollView horizontal={true} centerContent={true}>
+          <ScrollView horizontal={true} centerContent={true} >
             <LineChartComponent
               topic={measurement!.influx.topic!}
             ></LineChartComponent>
