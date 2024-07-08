@@ -75,7 +75,7 @@ export const fetchAllMeasurementsToTopicFromInfluxDB = async (
   topic: string
 ) => {
   try {
-    const query = `SELECT * FROM "mqtt_consumer" WHERE "topic" = '${topic}' ORDER BY time DESC LIMIT 12`;
+    const query = `SELECT * FROM "mqtt_consumer" WHERE "topic" = '${topic}' ORDER BY time DESC LIMIT 100`;
     const url = `${INFLUXDB_URL}?pretty=true&db=${BUCKET}&q=${encodeURIComponent(
       query
     )}&u=${encodeURIComponent(query)}`;

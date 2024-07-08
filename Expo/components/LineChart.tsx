@@ -1,31 +1,8 @@
-import { ThemedText } from "@/components/ThemedText";
-import {
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  RefreshControl,
-  View,
-  Dimensions,
-} from "react-native";
-import {
-  LineChart,
-  BarChart,
-  PieChart,
-  ProgressChart,
-  ContributionGraph,
-  StackedBarChart,
-} from "react-native-chart-kit";
+import { Dimensions } from "react-native";
+import { LineChart } from "react-native-chart-kit";
 import { useTheme } from "react-native-paper";
-import Storage from "react-native-storage";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
-import {
-  fetchAllMeasurementsToTopicFromInfluxDB,
-  fetchAllTopicsFromInfluxDB,
-  fetchNewestValueFromInfluxDB,
-  Measurement,
-} from "@/api";
-import { ChartData } from "react-native-chart-kit/dist/HelperTypes";
+import { fetchAllMeasurementsToTopicFromInfluxDB } from "@/api";
 import { DateTime } from "luxon";
 
 interface LineChartProps {
@@ -39,8 +16,8 @@ const LineChartComponent: React.FC<LineChartProps> = ({ topic }) => {
 
   const fetchMeasurementsForTopic = async () => {
     const response = await fetchAllMeasurementsToTopicFromInfluxDB(topic);
-
-    return response;
+    const responseSet = new Set(response);
+    return [...responseSet].slice(-12);
   };
 
   useEffect(() => {

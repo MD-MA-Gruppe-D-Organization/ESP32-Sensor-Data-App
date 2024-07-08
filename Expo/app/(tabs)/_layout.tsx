@@ -7,12 +7,11 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { useTheme } from "react-native-paper";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
   const theme = useTheme();
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        tabBarActiveTintColor: theme.colors.secondary,
         headerShown: false,
       }}
     >
