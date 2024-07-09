@@ -72,8 +72,8 @@ const SensorCard: React.FC<SensorCardProps> = ({
     return currentValue / maxValue;
   }
   const progressColor = (progress: number) => {
-    const r = Math.floor((255 * progress) / 100);
-    const g = Math.floor((255 * (100 - progress)) / 100);
+    const g = Math.floor((255 * progress) / 100);
+    const r = Math.floor((255 * (100 - progress)) / 100);
     return `rgb(${r},${g},0)`;
   };
   return (
@@ -111,10 +111,12 @@ const SensorCard: React.FC<SensorCardProps> = ({
                 style={{ color: theme.colors.onBackground }}
               >
                 {(
+                  100 -
                   normalizeValue(
                     measurement?.influx.value ?? 0,
                     measurement?.metaData.binSize
-                  ) * 100
+                  ) *
+                    100
                 ).toFixed(1)}
                 %
               </ThemedText>
@@ -122,10 +124,16 @@ const SensorCard: React.FC<SensorCardProps> = ({
           </Card.Content>
           <Card.Content>
             <ProgressBar
-              progress={normalizeValue(
-                measurement?.influx.value ?? 0,
-                measurement?.metaData.binSize
-              )}
+              progress={
+                // 100 -
+                // normalizeValue(
+                //   measurement?.influx.value ?? 0,
+                //   measurement?.metaData.binSize
+                // )
+
+                (measurement?.metaData.binSize! - measurement?.influx.value!) /
+                measurement?.metaData.binSize!
+              }
               color={progressColor(
                 measurement?.influx.value ??
                   0 *
@@ -176,12 +184,10 @@ const SensorCard: React.FC<SensorCardProps> = ({
                 </DataTable.Cell>
                 <DataTable.Cell>
                   {(
-                    100 -
                     normalizeValue(
                       measurement?.influx.value ?? 0,
                       measurement?.metaData.binSize
-                    ) *
-                      100
+                    ) * 100
                   ).toFixed(1)}
                   %
                 </DataTable.Cell>
@@ -256,7 +262,7 @@ const SensorCard: React.FC<SensorCardProps> = ({
             backgroundColor: theme.colors.background,
           }}
         >
-          <ScrollView horizontal={true} centerContent={true} >
+          <ScrollView horizontal={true} centerContent={true}>
             <LineChartComponent
               topic={measurement!.influx.topic!}
             ></LineChartComponent>
