@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Attach to Hermes application",
+            "cwd": "${workspaceFolder}/Expo",
+            "type": "reactnativedirect",
+            "request": "attach"
+        },
+        {
+            "cwd": "${workspaceFolder}/Expo",
+            "name": "Attach to Packager",
+            "type": "reactnativedirect",
+            "request": "attach",
+            "port": 8081,  // Port Metro Bundler is using
+            "sourceMaps": true,
+
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+    ]
+}
