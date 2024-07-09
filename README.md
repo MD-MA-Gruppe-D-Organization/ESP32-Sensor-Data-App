@@ -2,7 +2,7 @@
 This React-Native App displays filling data of trashcans.
 The data is fetched from an influx-database.
 
-## Prerequisites 
+## Prerequisites ⏮️
 
 Before you begin, ensure you have installed the following:
 
@@ -12,7 +12,7 @@ Before you begin, ensure you have installed the following:
 
 Follow the installation guides linked above if you haven't already installed these tools.
 
-## Setting Up the Android Emulator
+## Setting Up the Android Emulator 🪛
 
 To run ESP32-Sensor-Data-App on an Android device, you'll need to set up an Android emulator. Follow these steps:
 
@@ -20,7 +20,7 @@ To run ESP32-Sensor-Data-App on an Android device, you'll need to set up an Andr
 
 Ensure the emulator starts successfully before proceeding to the next step.
 
-## Starting the App with Expo 
+## Starting the App with Expo 🛫
 
 Once the Android emulator is ready, follow these steps to start ESP32-Sensor-Data-App:
 
@@ -38,7 +38,7 @@ Once the Android emulator is ready, follow these steps to start ESP32-Sensor-Dat
 
 The app should now load on your Android emulator!
 
-## Related Projects
+## Related Projects 🔗
 
 Check out the companion app repository: 
 
@@ -49,7 +49,7 @@ Check out the companion app repository:
 For detailed instructions on how to deploy and configure the MQTT broker and the esp32, please visit the project's [documentation](https://github.com/MD-MA-Gruppe-D-Organization/ESP32-Sensor-Communication/blob/dev/README.md).
 
 
-### Contributors
+### Contributors 👥
 
 - [Julian Ertle](https://github.com/julianertle)
 - [Nick Mittmann](https://github.com/Nick020401)
